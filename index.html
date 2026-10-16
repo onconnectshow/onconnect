@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="OnConnect () — a group show at The Living Gallery, Brooklyn. October 18–23, 2026.">
+</head>
+<body>
+<title>OnConnect () Group Show</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Inter:wght@400;500;700&display=swap">
+<style>
+  /* Layout: Framer's 822×590 exhibition canvas as one SVG stage, scaled to fit.
+     Every line runs in from far off-canvas and lands on the centre circle. */
+  :root {
+    --paper: #eaeae7;
+    --ink: #111111;
+    --line: #494949;
+    --node: #ffffff;
+    --signal: #f09248;
+    --serif: "Bodoni Moda", "Didot", "Bodoni 72", "Times New Roman", serif;
+    --logo: "Inter", "Helvetica Neue", Arial, sans-serif;
+    --sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+    color-scheme: light;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    overflow: hidden;
+    padding-block: 0;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
+    font-family: var(--sans);
+  }
+  svg.stage { display: block; width: 100%; height: 100%; overflow: visible; }
+
+  .serif { font-family: var(--serif); font-weight: 400; fill: var(--ink); font-optical-sizing: auto; }
+  .sans  { font-family: var(--sans); font-weight: 400; fill: var(--ink); }
+  .logo  { font-family: var(--logo); font-weight: 700; fill: #fff; }
+
+  /* ---------- Lines ---------- */
+  .wire {
+    fill: none; stroke: var(--line); stroke-width: var(--wire-w, 0.55);
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1;
+  }
+  .still .wire { stroke-dashoffset: 0; }
+  .stage:not(.tall) .phone { display: none; }
+  .tall .wire:not(.phone), .tall .wide { display: none; }
+  .stage.widepl:not(.tall) .wire:not(.wide) { display: none; }
+  /* Phones: slightly heavier type, with a paper-coloured edge so lines passing behind don't cut through letters */
+  .tall .serif, .tall .sans { font-weight: 500; paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
+  /* The leading tip of each line burns orange while it travels, then cools away */
+  .tip {
+    fill: none; stroke: var(--signal); stroke-width: var(--tip-w, 1.3); stroke-linecap: round;
+    stroke-dasharray: 0.05 3; stroke-dashoffset: 0.05;
+    transition: opacity 1.4s ease;
+  }
+  .tip.cool { opacity: 0; }
+  .sub .tips, .still .tips { display: none; }
+
+  /* ---------- Circles: grow when the first line reaches them ---------- */
+  .node {
+    transform-box: fill-box; transform-origin: center;
+    transform: scale(0);
+    transition: transform .8s cubic-bezier(.34,1.56,.64,1);
+  }
+  .node.on, .still .node { transform: scale(1); }
+  .node circle.fill { fill: var(--node); }
+  .spark { fill: var(--signal); pointer-events: none; }
+  .glow  { fill: #fff; pointer-events: none; filter: url(#soft); }
+
+  /* ---------- Logo + type, after every line has landed ---------- */
+  .logo-box {
+    fill: var(--signal);
+    transform-box: fill-box; transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform .7s cubic-bezier(.77,0,.18,1);
+  }
+  .logo { opacity: 0; transform: translateY(14px); transition: opacity .7s ease .45s, transform .7s cubic-bezier(.2,.8,.2,1) .45s; }
+  .info { opacity: 0; transition: opacity 1s ease; transition-delay: calc(1s + var(--d, 0) * .15s); }
+  .ready .logo-box, .still .logo-box { transform: scaleX(1); }
+  .ready .logo, .still .logo { opacity: 1; transform: none; }
+  .ready .info, .still .info { opacity: 1; }
+
+  /* ---------- Circle buttons ---------- */
+  .btn { cursor: pointer; outline: none; }
+  .btn .dot {
+    fill: var(--node);
+    transform-box: fill-box; transform-origin: center;
+    transition: transform .45s cubic-bezier(.34,1.56,.64,1), fill .25s ease;
+  }
+  .btn .label {
+    font-family: var(--sans); font-weight: 500; font-size: 11px;
+    fill: #fff; opacity: 0; pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .btn:hover .dot, .btn:focus-visible .dot, .btn.flash .dot { fill: var(--ink); transform: scale(1.6); }
+  .btn:hover .label, .btn:focus-visible .label, .btn.flash .label { opacity: 1; transition-delay: .12s; }
+  .btn:focus-visible .dot { stroke: var(--signal); stroke-width: 1.5; }
+  .btn .hit { fill: transparent; }
+
+  /* ---------- Views ---------- */
+  .poster-ui { transition: opacity .6s ease; }
+  .wires { transition: opacity .8s ease; }
+  .sub .poster-ui { opacity: 0; pointer-events: none; }
+  .sub .wires { opacity: 0; }   /* lines belong to the home page; inner pages stay clean for reading */
+
+  .page {
+    position: fixed; inset: 0; overflow-y: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: calc(env(safe-area-inset-top, 0px) + 28px) calc(env(safe-area-inset-bottom, 0px) + 64px);
+    opacity: 0; animation: pageIn .6s ease .15s forwards;
+  }
+  @keyframes pageIn { to { opacity: 1; } }
+  .wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(32px, 4.5vw, 56px); }
+
+  .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; }
+  .chip {
+    font-family: var(--logo); font-weight: 500; letter-spacing: -0.035em;
+    font-size: 17px; line-height: 1; color: #fff; background: var(--signal);
+    padding: 5px 8px 6px; text-decoration: none;
+  }
+  .chip:focus-visible, .nav a:focus-visible, .dir:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .nav { display: flex; gap: 22px; flex-wrap: wrap; }
+  .nav a {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; letter-spacing: -0.02em; color: var(--ink); text-decoration: none;
+  }
+  .nav a::before {
+    content: ""; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--node); transition: background .2s ease, transform .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .nav a:hover::before { background: var(--ink); transform: scale(1.25); }
+  .nav a[aria-current="page"]::before { background: var(--signal); }
+  ::selection { background: var(--signal); color: #fff; }
+
+  /* Artists: the room goes dark */
+  body { transition: background-color .6s ease; }
+  .wire { transition: stroke .6s ease; }
+  .v-artist body { background: var(--ink); }
+  /* About: white room */
+  .v-about body { background: var(--node); }
+  #page-about .nav a::before { background: var(--paper); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 25%, transparent); }
+  #page-about .nav a:hover::before { background: var(--ink); box-shadow: none; }
+  #page-about .nav a[aria-current="page"]::before { background: var(--signal); box-shadow: none; }
+  .v-artist .wire { stroke: var(--paper); }
+  #page-artist { color: var(--paper); }
+  #page-artist .nav a { color: var(--paper); }
+  #page-artist .artists li { color: var(--paper); }
+  #page-artist .artists li:hover .a-name { color: var(--signal); }
+  #page-artist .nav a:hover::before { background: var(--paper); }
+  #page-artist .nav a[aria-current="page"]::before { background: var(--signal); }
+  #page-artist .chip:focus-visible, #page-artist .nav a:focus-visible { outline-color: var(--paper); }
+
+  .kicker { font-size: 14px; font-weight: 400; letter-spacing: -0.02em; margin: 0; }
+  .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; align-items: baseline; }
+
+  /* Artist */
+  .artists { list-style: none; margin: 0; padding: 0; max-width: 980px; }
+  .artists li {
+    display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 8px 40px; align-items: baseline;
+    padding-block: 18px; border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  }
+  .artists li:last-child { border-bottom: 1px solid color-mix(in srgb, currentColor 22%, transparent); }
+  .artists p { margin: 0; min-width: 0; }
+  .a-name { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 1.9vw, 26px); line-height: 1.25; transition: color .25s ease; }
+  .a-bio { font-size: 14px; line-height: 1.55; max-width: 36em; opacity: .7; }
+  .artists li:hover .a-name { color: var(--signal); }
+  @media (max-width: 640px) { .artists li { grid-template-columns: 1fr; } }
+
+
+  /* Artists: a spine of nodes, one per artist */
+  .artists li { position: relative; padding-left: 34px; }
+  .artists li::before {
+    content: ""; position: absolute; left: 0; top: 27px; width: 9px; height: 9px; border-radius: 50%;
+    background: currentColor; transition: background-color .25s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .artists li::after {
+    content: ""; position: absolute; left: 4px; top: 0; bottom: 0; width: 1px;
+    background: color-mix(in srgb, currentColor 28%, transparent);
+  }
+  .artists li:first-child::after { top: 31px; }
+  .artists li:last-child::after { bottom: auto; height: 31px; }
+  .artists li:hover::before { background: var(--signal); transform: scale(1.6); }
+  .artists li { scroll-margin-top: 32px; }
+  .a-name { cursor: pointer; }
+  .a-name:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; }
+  .artists li.flash-row .a-name { animation: rowflash 1.6s ease; }
+  .artists li.flash-row::before { animation: dotflash 1.6s ease; }
+  @keyframes rowflash { 0%, 55% { color: var(--signal); } }
+  @keyframes dotflash { 0%, 55% { background: var(--signal); transform: scale(1.6); } }
+
+  /* Artworks dropdown */
+  .dd { position: relative; display: inline-flex; }
+  .dd-menu {
+    list-style: none; margin: 0; padding: 8px 0; position: absolute; top: calc(100% + 10px); left: -16px; z-index: 5;
+    width: max-content; min-width: 150px; max-width: min(230px, calc(100vw - 32px));
+    background: var(--node); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent), 0 12px 30px -12px color-mix(in srgb, var(--ink) 30%, transparent);
+    opacity: 0; visibility: hidden; transform: translateY(-4px);
+    transition: opacity .2s ease, transform .2s ease, visibility 0s linear .2s;
+  }
+  .dd-menu::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }   /* bridge so the pointer can travel down */
+  .dd:hover .dd-menu, .dd:focus-within .dd-menu { opacity: 1; visibility: visible; transform: none; transition: opacity .2s ease, transform .2s ease; }
+  .dd.shut .dd-menu { opacity: 0; visibility: hidden; }
+  .nav .dd-menu a { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 14px; color: var(--ink); }
+  .nav .dd-menu a::before { display: none; }
+  .dd-menu em { font-family: var(--sans); font-style: normal; font-size: 14px; line-height: 1.3; letter-spacing: -0.01em; }
+  .dd-menu span { font-size: 12px; color: var(--line); }
+  .nav .dd-menu a:hover, .nav .dd-menu a:focus-visible { color: var(--signal); outline: none; }
+  #page-artist .dd-menu { background: #1d1d1d; box-shadow: 0 0 0 1px color-mix(in srgb, var(--paper) 18%, transparent); }
+  #page-artist .nav .dd-menu a { color: var(--paper); }
+  #page-artist .dd-menu span { color: color-mix(in srgb, var(--paper) 60%, transparent); }
+  #page-artist .nav .dd-menu a:hover { color: var(--signal); }
+  @media (hover: none) { .dd-menu { display: none; } }
+
+  /* About */
+  .statement {
+    font-family: var(--serif); font-size: clamp(17px, 1.3vw, 19px); line-height: 1.55;
+    max-width: 36em; margin: 0; text-wrap: pretty;
+    display: flex; flex-direction: column; gap: 1em;
+  }
+  .statement p { margin: 0; }
+  /* Visit (on About) */
+  .visit { display: flex; flex-direction: column; gap: 20px; padding-top: 28px; border-top: 1px solid var(--line); }
+  .visit-where { display: flex; flex-direction: column; gap: 14px; }
+  .about-info { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 40px clamp(32px, 5vw, 72px); align-items: start; }
+  .about-info > section { scroll-margin-top: 32px; }
+  .visit.press .facts { grid-template-columns: 1fr; gap: 16px; }
+  .press-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .press-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; padding-block: 12px; border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
+  .press-list p { margin: 0; }
+  .press-pub { font-size: 12px; color: var(--line); grid-column: 1; }
+  .press-title { font-family: var(--serif); font-style: italic; font-size: 18px; line-height: 1.3; grid-column: 1; }
+  .press-date { font-size: 12px; color: var(--line); grid-column: 2; grid-row: 1; }
+  @media (max-width: 860px) { .about-info { grid-template-columns: 1fr; } }
+  .visit .facts { max-width: none; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+  .credits .facts { max-width: 900px; }
+
+  /* Works */
+  .works {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: 40px 24px;
+  }
+  .work { min-width: 0; }
+  .work a { display: flex; flex-direction: column; gap: 4px; color: var(--ink); text-decoration: none; }
+  .work a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+  .work-img, .ph {
+    aspect-ratio: 4 / 3; max-width: 100%;
+    background: var(--node); display: grid; place-items: center;
+    transition: background-color .25s ease;
+  }
+  .work-img { margin-bottom: 10px; }
+  .work-img span, .ph span { font-size: 12px; color: var(--line); letter-spacing: -0.01em; transition: color .25s ease; }
+  .work a:hover .work-img { background: var(--ink); }
+  .work a:hover .work-img span { color: var(--paper); }
+  .work a:hover .work-title { color: var(--signal); }
+  .work p { margin: 0; }
+  .work-title { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 1.7vw, 24px); line-height: 1.2; transition: color .25s ease; }
+  .work-artist { font-size: 14px; letter-spacing: -0.01em; }
+  .work-medium { font-size: 12px; color: var(--line); }
+
+  /* Floor map */
+  .floor { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 32px clamp(32px, 6vw, 96px); align-items: start; }
+  .floor-map { position: sticky; top: 0; display: flex; flex-direction: column; gap: 12px; }
+  .floor-head { display: flex; flex-direction: column; gap: 4px; }
+  .floor-label { margin: 0; font-size: 12px; color: var(--line); }
+  #floor-svg { display: block; width: 100%; max-width: 320px; height: auto; max-height: 78vh; }
+  .floor-wall { fill: var(--node); stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: miter; }
+  .spot { cursor: pointer; outline: none; }
+  .spot circle { fill: var(--paper); transform-box: fill-box; transform-origin: center; transition: transform .35s cubic-bezier(.34,1.56,.64,1), fill .2s ease; }
+  .spot text { font-family: var(--sans); font-size: 17px; fill: var(--ink); pointer-events: none; transition: fill .2s ease; }
+  .spot.hot circle, .spot:focus-visible circle { fill: var(--ink); transform: scale(1.18); }
+  .spot.hot text, .spot:focus-visible text { fill: #fff; }
+  .spot.on circle { fill: var(--signal); transform: scale(1.3); }
+  /* Each move between numbers draws a connection; old ones settle to grey */
+  .link { fill: none; stroke: var(--signal); stroke-width: 1.4; stroke-linecap: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1; pointer-events: none;
+    transition: stroke-dashoffset .9s cubic-bezier(.55,0,.3,1), stroke 1.2s ease, opacity 1.2s ease; }
+  .link.drawn { stroke-dashoffset: 0; }
+  .link.past { stroke: var(--ink); opacity: .35; }
+  @media (prefers-reduced-motion: reduce) { .link { transition: none; } }
+  .spot.on text { fill: #fff; }
+
+  .checklist { list-style: none; margin: 0; padding: 0; max-width: 640px; }
+  .ck { border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
+  .ck:last-child { border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
+  .ck-head {
+    all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+    display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding-block: 14px;
+  }
+  .ck-head:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .ck-n { font-size: 13px; padding-top: 3px; color: var(--line); font-variant-numeric: tabular-nums; transition: color .2s ease; }
+  .ck.hot .ck-n { color: var(--ink); }
+  .ck.open .ck-n { color: var(--signal); }
+  .ck-line { font-family: var(--serif); font-size: 19px; line-height: 1.3; min-width: 0; transition: color .2s ease; }
+  .ck.hot .ck-line { color: var(--ink); }
+  .ck.open .ck-line { color: var(--signal); }
+  .ck-line em { font-family: var(--serif); font-size: 17px; }
+  .ck-title { margin: 0; font-size: 15px; }
+  .ck-mat { margin: -8px 0 4px; font-size: 13px; color: var(--line); }
+  .ck-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2,.8,.2,1); }
+  .ck.open .ck-body { grid-template-rows: 1fr; }
+  .ck-inner { overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding-left: 46px; }
+  .ck.open .ck-inner { padding-bottom: 20px; }
+  .ck-img { width: 100%; max-width: 420px; }
+  .ck-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ck-text { margin: 0; font-family: var(--serif); font-size: 16px; line-height: 1.55; max-width: 34em; }
+  .wd-spec dd a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; }
+  .wd-spec dd a:hover { color: var(--signal); }
+  .notice { margin: 0; font-size: 12px; color: var(--line); max-width: 46em; line-height: 1.5; }
+  .ck-go { align-self: flex-start; font-size: 14px; color: var(--ink); text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+  .ck-go:hover { color: var(--signal); }
+  @media (max-width: 760px) {
+    .floor { grid-template-columns: 1fr; }
+    .floor-map { position: static; align-items: center; }
+    #floor-svg { max-width: 220px; }
+  }
+
+  /* Close-up viewer */
+  img.zoomable { cursor: zoom-in; transition: opacity .2s ease; }
+  img.zoomable:hover { opacity: .92; }
+  img.zoomable:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
+  .lb-on, .lb-on body { overflow: hidden; }
+  .lb {
+    position: fixed; inset: 0; z-index: 50; background: rgba(17,17,17,.99);
+    display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; align-items: center;
+    padding: calc(env(safe-area-inset-top, 0px) + 56px) max(8px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 24px) max(8px, env(safe-area-inset-left, 0px));
+    animation: lbIn .25s ease;
+  }
+  @keyframes lbIn { from { opacity: 0; } }
+  .lb-fig { grid-column: 2; grid-row: 1; margin: 0; height: 100%; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; cursor: zoom-out; }
+  .lb-fig img { max-width: 100%; max-height: calc(100% - 40px); object-fit: contain; display: block; cursor: default; }
+  .lb-fig figcaption { display: flex; gap: 16px; font-size: 13px; color: #eaeae7; }
+  .lb-count { color: rgba(234,234,231,.55); font-variant-numeric: tabular-nums; }
+  .lb button { all: unset; cursor: pointer; color: #eaeae7; display: grid; place-items: center; border-radius: 50%; transition: background-color .2s ease, color .2s ease; }
+  .lb .lb-prev { grid-column: 1; grid-row: 1; }
+  .lb .lb-next { grid-column: 3; grid-row: 1; }
+  .lb .lb-nav { width: 48px; height: 48px; font-size: 20px; justify-self: center; }
+  .lb .lb-nav:hover, .lb .lb-nav:focus-visible { background: var(--signal); color: #fff; }
+  .lb .lb-close { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); right: max(12px, env(safe-area-inset-right, 0px)); width: 40px; height: 40px; font-size: 26px; line-height: 1; }
+  .lb .lb-close:hover, .lb .lb-close:focus-visible { background: var(--signal); color: #fff; }
+  .lb.single .lb-nav { visibility: hidden; }
+  @media (max-width: 640px) { .lb { grid-template-columns: 0 minmax(0, 1fr) 0; } .lb .lb-nav { display: none; } }
+
+  /* Single work */
+  .back { align-self: flex-start; font-size: 14px; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; margin-bottom: calc(clamp(32px, 4.5vw, 56px) * -0.5); }
+  .back:hover { color: var(--signal); }
+  .wd { display: flex; flex-direction: column; gap: clamp(28px, 4vw, 48px); }
+  .wd-hero { aspect-ratio: 16 / 9; width: 100%; max-height: 62vh; }
+  .wd-hero, .wd-more .ph, .ck-img { position: relative; overflow: hidden; }
+  .wd-hero img, .wd-more img, .ck-img img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .wd-hero img { object-fit: contain; }
+  .wd-more img, .ck-img img { object-fit: cover; }
+  .wd-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 32px 64px; align-items: start; }
+  .wd-info { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .wd-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(28px, 2.8vw, 38px); line-height: 1.15; margin: 0; text-wrap: balance; }
+  .wd-artist { font-size: 15px; margin: 0; }
+  .wd-artist a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; }
+  .wd-artist a:hover { color: var(--signal); }
+  .wd-spec { margin: 14px 0 0; display: flex; flex-direction: column; gap: 0; }
+  .wd-spec div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding-block: 9px; border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
+  .wd-spec dt { font-size: 12px; color: var(--line); }
+  .wd-spec dd { margin: 0; font-size: 14px; }
+  .wd-text { font-family: var(--serif); font-size: clamp(17px, 1.3vw, 19px); line-height: 1.55; display: flex; flex-direction: column; gap: 1em; max-width: 36em; min-width: 0; }
+  .wd-text p { margin: 0; }
+  .wd-more { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 24px; }
+  .wd-more li { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .wd-more .cap { font-size: 12px; color: var(--line); }
+  .wd-pager { display: flex; justify-content: space-between; gap: 24px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .wd-pager a { display: flex; flex-direction: column; gap: 4px; color: var(--ink); text-decoration: none; min-width: 0; }
+  .wd-pager a:last-child { text-align: right; }
+  .wd-pager .lbl { font-size: 12px; color: var(--line); }
+  .wd-pager .nm { font-family: var(--serif); font-style: italic; font-size: 18px; }
+  .wd-pager a:hover .nm { color: var(--signal); }
+  @media (max-width: 760px) { .wd-body { grid-template-columns: 1fr; } }
+  .about-top { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 32px clamp(32px, 5vw, 80px); align-items: start; }
+  .poster { margin: 0; width: 100%; position: sticky; top: 28px; }
+  @media (max-width: 860px) { .about-top { grid-template-columns: 1fr; } .poster { position: static; max-width: 420px; } }
+  .poster img { display: block; width: 100%; height: auto; max-width: 100%; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 24px; margin: 0; max-width: 900px; }
+  .facts div { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .facts dt { font-size: 12px; letter-spacing: -0.01em; }
+  .facts dd { margin: 0; font-family: var(--serif); font-size: 16px; line-height: 1.35; }
+
+  /* Contact */
+  .venue { font-family: var(--serif); font-size: clamp(28px, 2.8vw, 38px); line-height: 1; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  .addr { font-family: var(--serif); font-size: clamp(16px, 1.4vw, 19px); line-height: 1.45; margin: 0; font-style: normal; }
+  .dir {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; color: var(--ink); text-decoration: none; letter-spacing: -0.02em;
+  }
+  .dir:hover { color: var(--signal); }
+  .map { display: inline-flex; align-items: flex-start; gap: 10px; align-self: flex-start; color: var(--ink); text-decoration: none; }
+  .map .pin { width: 20px; height: 20px; flex: none; margin-top: 3px; fill: none; stroke: currentColor; stroke-width: 1.4; transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
+  .map .pin circle { fill: var(--signal); stroke: none; }
+  .map:hover { color: var(--signal); }
+  .map:hover .pin { transform: translateY(-3px); }
+  .map:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+
+  @media (prefers-reduced-motion: reduce) {
+    .page { animation: none; opacity: 1; }
+    .node, .btn .dot, .logo-box, .logo, .info { transition: none; }
+  }
+</style>
+
+<svg class="stage" viewBox="0 0 822 590" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="t d" id="stage">
+  <title id="t">OnConnect () — Group Show</title>
+  <desc id="d">October 18–23, 2026 at The Living Gallery, 1094 Broadway, Brooklyn, New York. Open every day 11AM–8PM. Opening reception Sunday, October 18, with an artist talk 7PM–8PM.</desc>
+  <defs>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+
+  <g class="wires" aria-hidden="true">
+    <path class="wire" pathLength="1" d="M -473.1 -461.8 C -323.8 -282.5 -174.4 -103.3 -25 76 C 5 112 30 138 56.17 161.0337 C 130 220 205 255 329.8275 265.5343" data-src="M -25 76 C 5 112 30 138 56.17 161.0337 C 130 220 205 255 329.8275 265.5343"/>
+    <path class="wire" pathLength="1" d="M 1091.6 -675.1 C 1001.1 -460.1 910.5 -245.0 820 -30 C 780 65 735 130 700.07 161.0337 C 590 230 475 280 329.8275 265.5343" data-src="M 820 -30 C 780 65 735 130 700.07 161.0337 C 590 230 475 280 329.8275 265.5343"/>
+    <path class="wire" pathLength="1" d="M 1082.4 -408.3 C 888.3 -278.9 694.1 -149.4 500 -20 C 344 84 320 155 329.8275 265.5343" data-src="M 500 -20 C 344 84 320 155 329.8275 265.5343"/>
+    <path class="wire" pathLength="1" d="M 1068.6 1243.3 C 962.4 1035.5 856.2 827.8 750 620 C 704 530 658 477 605.54 448.1533 C 434 393 354 355 329.8275 265.5343" data-src="M 750 620 C 704 530 658 477 605.54 448.1533 C 434 393 354 355 329.8275 265.5343"/>
+    <path class="wire" pathLength="1" d="M 61.9 1316.2 C 86.2 1084.1 110.6 852.1 135 620 C 160 382 226 306 329.8275 265.5343" data-src="M 135 620 C 160 382 226 306 329.8275 265.5343"/>
+    <path class="wire" pathLength="1" d="M 1506.8 423.7 C 1286.9 345.8 1066.9 267.9 847 190 C 799 173 750 162 700.07 161.0337 C 612 142 487 173 329.8275 265.5343" data-src="M 847 190 C 799 173 750 162 700.07 161.0337 C 612 142 487 173 329.8275 265.5343"/>
+    <path class="wire" pathLength="1" d="M -156.7 1089.5 C -107.8 861.3 -58.9 633.2 -10 405 C 32 209 44 184 56.17 161.0337 C 130 220 205 255 329.8275 265.5343" data-src="M 8 650 C -22 480 -4.8 276 56.17 161.0337 C 92.7 92 125.5 32 175 -40"/>
+    <path class="wire" pathLength="1" d="M 888.7 1317.9 C 870.8 1085.3 852.9 852.6 835 620 C 824 477 711 392 605.54 448.1533 C 434 393 354 355 329.8275 265.5343" data-src="M 835 620 C 824 477 711 392 605.54 448.1533 C 434 393 354 355 329.8275 265.5343"/>
+    <path class="wire" pathLength="1" d="M 542.3 1319.7 C 535.8 1086.5 529.4 853.2 523 620 C 520 511 554 470 605.54 448.1533 C 434 393 354 355 329.8275 265.5343" data-src="M 523 620 C 520 511 554 470 605.54 448.1533 C 434 393 354 355 329.8275 265.5343"/>
+  </g>
+
+  <g class="poster-ui">
+    <!-- Centre circle -->
+    <g class="bob" data-anchor="center" data-bob="2.5">
+      <g class="node" data-anchor="center">
+        <circle class="fill" cx="329.8275" cy="265.5343" r="69.4"/>
+      </g>
+    </g>
+
+    <!-- Circle buttons -->
+    <g class="bob" data-anchor="about" data-bob="4">
+      <g class="node" data-anchor="about">
+        <a href="#works" class="btn" aria-label="Artworks">
+          <circle class="hit" cx="56.17" cy="161.0337" r="34"/>
+          <circle class="dot" cx="56.17" cy="161.0337" r="18"/>
+          <text class="label" x="56.17" y="164.9" text-anchor="middle">Artworks</text>
+        </a>
+      </g>
+    </g>
+    <g class="bob" data-anchor="artists" data-bob="4">
+      <g class="node" data-anchor="artists">
+        <a href="#artist" class="btn" aria-label="Artists">
+          <circle class="hit" cx="700.07" cy="161.0337" r="34"/>
+          <circle class="dot" cx="700.07" cy="161.0337" r="18"/>
+          <text class="label" x="700.07" y="164.9" text-anchor="middle">Artists</text>
+        </a>
+      </g>
+    </g>
+    <g class="bob" data-anchor="contact" data-bob="4">
+      <g class="node" data-anchor="contact">
+        <a href="#about" class="btn" aria-label="About">
+          <circle class="hit" cx="605.54" cy="448.1533" r="34"/>
+          <circle class="dot" cx="605.54" cy="448.1533" r="18"/>
+          <text class="label" x="605.54" y="452" text-anchor="middle">About</text>
+        </a>
+      </g>
+    </g>
+
+    <!-- Logo -->
+    <rect class="logo-box" x="252.6" y="257" width="345.3" height="59.3"/>
+    <text class="logo" x="425.3" y="304.3" font-size="50.3" text-anchor="middle">OnConnect ()</text>
+
+    <!-- Dates -->
+    <g id="t-dates"><g class="info" style="--d:0">
+      <text class="serif" x="31.5" y="48.7"  font-size="24.2">OCTOBER</text>
+      <text class="serif" x="31.5" y="78.1"  font-size="24.2">18–23</text>
+      <text class="serif" x="31.5" y="107.5" font-size="24.2">2026</text>
+    </g></g>
+    <g id="t-group"><text class="sans info" style="--d:0" x="424.3" y="37.9" font-size="14.5" text-anchor="middle">Group Show</text></g>
+
+    <!-- Venue -->
+    <g id="t-venue"><g class="info" style="--d:1">
+      <text class="serif" x="797" y="351" font-size="20.5" text-anchor="end">The Living Gallery</text>
+      <text class="serif" x="797" y="382.5" font-size="15.3" letter-spacing="0.1" text-anchor="end">1094 Broadway,</text>
+      <text class="serif" x="797" y="403" font-size="15.3" letter-spacing="0.1" text-anchor="end">Brooklyn, New York</text>
+    </g></g>
+
+    <!-- Reception -->
+    <g id="t-recep"><g class="info" style="--d:2">
+      <text class="sans" x="31.5" y="546.1" font-size="14.2" letter-spacing="0.2">Opening Reception</text>
+      <text class="sans" x="31.5" y="565.3" font-size="14.2" letter-spacing="0.2">Sunday 18th 7PM</text>
+    </g></g>
+
+    <g id="fx" aria-hidden="true"></g>
+  </g>
+</svg>
+
+<!-- ---------- Artist ---------- -->
+<section class="page" id="page-artist" hidden aria-labelledby="h-artist">
+  <div class="wrap">
+    <header class="bar">
+      <a class="chip" href="#">OnConnect ()</a>
+      <nav class="nav" aria-label="Pages">
+        <a href="#works">Artworks</a><a href="#artist" aria-current="page">Artists</a><a href="#about">About</a>
+      </nav>
+    </header>
+    <div class="meta">
+      <h1 class="kicker" id="h-artist">Artists in the show</h1>
+      <p class="kicker">Ten artists · October 18–23, 2026</p>
+    </div>
+    <ul class="artists">
+      <li>
+        <p class="a-name">Matthew Blanco</p>
+        <p class="a-bio">Matthew Blanco is an American-born technologist and adventurer. His work centers around the ephemeral bridge between software &amp; hardware and the cultural implications of the technology we surround ourselves with. Through code, electronics, and digital fabrication, his work reveals the complexities of digital infrastructure that we take for granted and the ways programmed media has, in turn, programmed us. By viewing contemporary technology as a series of shifting environments, his work is both critical and hopeful of success how digital technology can empower us so long as we understand how it works.</p>
+      </li>
+      <li>
+        <p class="a-name">Joy Chang</p>
+        <p class="a-bio">Tzuyi Joy Chang is a New York–based creative technologist and engineer who builds physical systems that explore the invisible forces embedded in everyday life. Through electronics, mechanisms, light, and familiar objects, her work invites audiences to reconsider how these hidden structures shape our experiences and interactions with the world around us.</p>
+      </li>
+      <li>
+        <p class="a-name">Jasmine Chou</p>
+        <p class="a-bio">Jasmine Chou is a Taiwanese artist, creative technologist, and film producer based in New York and Taipei. Drawing from her background in film, television, and theater, she develops stories across film and interactive media. Her work explores different forms of storytelling and how narratives are shaped by medium, interaction, and audience experience. Her recent focus is on using interactive story to create playful ways of sharing knowledge and engaging with learning. She is currently pursuing her master’s degree at NYU’s Interactive Telecommunications Program (ITP).</p>
+      </li>
+      <li>
+        <p class="a-name">Ian Cox</p>
+        <p class="a-bio">Ian Cox (b. 1990, Denver, Colorado) is an artist living and working in Astoria, New York. His practice centers on the construction of sculptural objects that simulate rituals, tools, and systems of belief adapted to contemporary technological and cultural conditions.</p>
+      </li>
+      <li>
+        <p class="a-name">gabriel gutierrez</p>
+        <p class="a-bio">gabriel gutierrez is a mexican-american artist and sound enthusiast living in brooklyn. he uses software and hardware to build instruments and installations in order to explore new textures and ways of making sound.</p>
+      </li>
+      <li>
+        <p class="a-name">Mina Huang</p>
+        <p class="a-bio">Mina Huang is a New York–based filmmaker and multidisciplinary artist who likes making things that bring out the kid in you. She is drawn to the way nostalgia can make something ordinary suddenly feel precious again. She likes taking familiar memories and everyday experiences, playing with the rules a little, and turning them into something others can join in on. She holds a BFA in Film from the School of Visual Arts and is now pursuing an MPS in Interactive Telecommunications at NYU.</p>
+      </li>
+      <li>
+        <p class="a-name">Jisoo Kim</p>
+        <p class="a-bio">Jisoo Kim is an artist and creative technologist based in Seoul and New York. Her practice explores loneliness, intimacy, place, and human connection within contemporary urban life. Through interactive installations, physical computing, 3D animation, and digital media, Kim creates immersive experiences that explore how technology shapes the ways we relate to ourselves, others, and our surroundings. Her work combines storytelling and computational processes to create accessible forms of interaction, while her practice also extends into curatorial work, creative production, and workshops.</p>
+      </li>
+      <li>
+        <p class="a-name">Jane Lee</p>
+        <p class="a-bio">Jane Lee is a Seoul and New York based painter and writer who explores the relationship between space, object, and language. Lee’s writings investigate the visual layout and linguistics of emotional time and space through poetry, prose, and journalism. She holds an MFA from California Institute of the Arts (2024). Lee’s recent exhibitions include the Traces in the Moment, Floor, Seoul (2022) and San Francisco Art Book Fair with Waikiki Funeral (2024).</p>
+      </li>
+      <li>
+        <p class="a-name">Lingwu Li</p>
+        <p class="a-bio">Lingwu Li is a multimedia artist exploring physical and digital space through mixed reality and interactive games. His work examines how spaces shape behavior and social relationships. He is currently pursuing an MFA at NYU’s Interactive Telecommunications Program.</p>
+      </li>
+      <li>
+        <p class="a-name">Anshula Saha</p>
+        <p class="a-bio">Anshula Saha is a designer, creative technologist, and storyteller based in New York City. Her practice is drawn to the emotional weirdness of technology: waiting, friction, longing, attachment, fear, intimacy, misunderstanding, and care. She is interested in how digital systems meet the body, how people learn through touch and interaction, and how technology changes the way we connect with and treat one another. She believes accessibility is not only about making systems easier to use, but about making people feel invited into worlds they might otherwise feel excluded from. Working across code, writing, installation, physical computing, materials, memory, and storytelling, she builds work that is soft, embodied, and deeply human while still being technically precise.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------- About ---------- -->
+<section class="page" id="page-about" hidden aria-labelledby="h-about">
+  <div class="wrap">
+    <header class="bar">
+      <a class="chip" href="#">OnConnect ()</a>
+      <nav class="nav" aria-label="Pages">
+        <a href="#works">Artworks</a><a href="#artist">Artists</a><a href="#about" aria-current="page">About</a>
+      </nav>
+    </header>
+    <h1 class="kicker" id="h-about">About the exhibition</h1>
+    <div class="about-top">
+    <figure class="poster">
+      <img src="poster.jpg" width="1800" height="2400" alt="OnConnect () exhibition poster: thin lines connecting white circles around the orange OnConnect () logo, with the dates October 18–22, 2026, The Living Gallery at 1094 Broadway, Brooklyn, the opening reception Sunday 18th at 7PM, and the names of the ten artists.">
+    </figure>
+    <div class="statement">
+      <p>Connection can no longer be understood as a simple link between discrete entities. Digital networks, interfaces, algorithms, and data have fundamentally reshaped the ways in which humans, technologies, images, and environments relate to one another. Connection is no longer the outcome of interaction, but the condition through which relationships are organized and continually reconfigured. We exist not outside these systems, but as part of the networks that shape us.</p>
+      <p><em>OnConnect()</em> takes this shift as its point of departure, approaching connection as an event rather than a fixed state. The exhibition explores how relationships between humans and technologies, spaces and environments are formed and transformed, while questioning how the human is positioned within connection itself. Rather than representing relationships, the participating works construct situations in which visitors, artworks, and space actively reorganize one another. The gallery thus becomes not a site where connection is represented, but one in which it is enacted, negotiated, and continually renewed.</p>
+      <p>Bringing together ten media artists, <em>OnConnect()</em> features interactive installations, kinetic objects, sound works, moving images, and network-based projects that investigate relationships between humans and machines, material and immaterial systems, perception and infrastructure. Visitors move beyond the role of spectators as their presence, movement, and decisions become integral to the unfolding of each work.</p>
+      <p>Workshops and public programs extend these encounters beyond the exhibition space, positioning the exhibition itself as a platform for collectively producing and reflecting upon connection.</p>
+    </div>
+    </div>
+    <div class="about-info">
+    <section class="visit" id="visit" aria-labelledby="h-visit">
+      <h2 class="kicker" id="h-visit">Gallery info</h2>
+      <div class="visit-where">
+        <p class="venue">The Living Gallery</p>
+        <a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=1094+Broadway+Brooklyn+NY" target="_blank" rel="noopener" aria-label="Open 1094 Broadway, Brooklyn, New York in Google Maps">
+          <svg class="pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.6 7-12.2A7 7 0 0 0 5 9.8C5 15.4 12 22 12 22z"/><circle cx="12" cy="9.8" r="2.6"/></svg>
+          <address class="addr">1094 Broadway,<br>Brooklyn, New York</address>
+        </a>
+        <a class="dir" href="https://www.google.com/maps/dir/?api=1&amp;destination=1094+Broadway+Brooklyn+NY" target="_blank" rel="noopener">Get directions ↗</a>
+      </div>
+      <dl class="facts">
+        <div><dt>Dates &amp; hours</dt><dd>October 18–23, 2026<br>11AM–8PM</dd></div>
+        <div><dt>Opening reception &amp; artist talk</dt><dd>Sunday, October 18<br>7PM–8PM</dd></div>
+      </dl>
+    </section>
+    <section class="visit press" id="press" aria-labelledby="h-press">
+      <h2 class="kicker" id="h-press">Press</h2>
+      <ul class="press-list">
+        <li><p class="press-pub">Publication name</p><p class="press-title">Article title to come</p><p class="press-date">Date</p></li>
+        <li><p class="press-pub">Publication name</p><p class="press-title">Article title to come</p><p class="press-date">Date</p></li>
+      </ul>
+      <dl class="facts">
+        <div><dt>Contact</dt><dd>Contact to come</dd></div>
+        <div><dt>Press kit</dt><dd>Images and release coming soon</dd></div>
+      </dl>
+    </section>
+    </div>
+  </div>
+</section>
+
+<!-- ---------- Works ---------- -->
+<section class="page" id="page-works" hidden aria-labelledby="h-works">
+  <div class="wrap">
+    <header class="bar">
+      <a class="chip" href="#">OnConnect ()</a>
+      <nav class="nav" aria-label="Pages">
+        <a href="#works" aria-current="page">Artworks</a><a href="#artist">Artists</a><a href="#about">About</a>
+      </nav>
+    </header>
+    <div class="floor">
+      <div class="floor-map">
+        <div class="floor-head">
+          <h1 class="kicker" id="h-works">Floor map</h1>
+          <p class="floor-label">Press the numbers to see the artworks<br>and watch the connections form</p>
+        </div>
+        <svg id="floor-svg" viewBox="80 120 400 960" role="group" aria-label="Floor map of The Living Gallery. Select a number to see that work.">
+          <path class="floor-wall" d="M105 145 H455 V432 H443 V785 H432 V985 H420 V1057 H220 V1042 H105 Z"/>
+          <g id="floor-links"></g>
+          <g id="floor-spots"></g>
+        </svg>
+      </div>
+      <ol class="checklist" id="checklist"></ol>
+    </div>
+    <p class="notice">*Visitors viewing or interacting with the artworks may be photographed or filmed for exhibition documentation and promotional use.</p>
+  </div>
+</section>
+
+<!-- ---------- Single work (filled in from the WORKS list in the script) ---------- -->
+<section class="page" id="page-work" hidden aria-labelledby="h-work">
+  <div class="wrap">
+    <header class="bar">
+      <a class="chip" href="#">OnConnect ()</a>
+      <nav class="nav" aria-label="Pages">
+        <a href="#works" aria-current="page">Artworks</a><a href="#artist">Artists</a><a href="#about">About</a>
+      </nav>
+    </header>
+    <a class="back" href="#works">← All artworks</a>
+    <article class="wd">
+      <div class="wd-hero ph" id="wd-hero"><span>Main image to come</span></div>
+      <div class="wd-body">
+        <div class="wd-info">
+          <h1 class="wd-title" id="h-work">Title to come</h1>
+          <p class="wd-artist" id="wd-artist"></p>
+          <dl class="wd-spec">
+            <div><dt>Materials</dt><dd id="wd-medium"></dd></div>
+            <div><dt>Year</dt><dd id="wd-year"></dd></div>
+            <div id="wd-dims-row"><dt>Dimensions</dt><dd id="wd-dims"></dd></div>
+            <div id="wd-ig-row"><dt>Instagram</dt><dd id="wd-ig"></dd></div>
+          </dl>
+        </div>
+        <div class="wd-text" id="wd-text"></div>
+      </div>
+      <ul class="wd-more" id="wd-more"></ul>
+    </article>
+    <nav class="wd-pager" aria-label="More works">
+      <a id="wd-prev" href="#"><span class="lbl">Previous</span><span class="nm"></span></a>
+      <a id="wd-next" href="#"><span class="lbl">Next</span><span class="nm"></span></a>
+    </nav>
+  </div>
+</section>
+
+
+<script>
+  (function () {
+    /* ---------- Routing ---------- */
+    /* ---------- Works, in floor-map order ----------
+       n: number on the floor map; x, y: its spot on the plan.
+       Add text: ['paragraph', ...] and images: [{ src: 'file.jpg', caption: '...' }] as material arrives. */
+    var WORKS = [
+      {
+      "n": 1,
+      "artist": "gabriel gutierrez",
+      "title": "pachinko composer",
+      "year": "2026",
+      "medium": "wood, steel, pla, electronics",
+      "x": 135,
+      "y": 908,
+      "handle": "iggy_poppers",
+      "text": [
+      "the <em>pachinko composer</em> explores the aleatoric side of connection, something that occurs randomly and without determination. Much like the routine of daily life, the tilting of the platform is constant and repetitive, however, the movement of the ball across the platform as it tilts is random and unpredictable, varying even more as it makes connections with the nails and changes its course. in this way it mirrors the unexpected and unpredictable connections that occur in life"
+      ]
+      },
+      {
+      "n": 2,
+      "artist": "Ian Cox",
+      "title": "Vape Thurible",
+      "year": "2022",
+      "medium": "Plastic, Metal, Wood",
+      "x": 137,
+      "y": 747,
+      "handle": "_ian.cox_",
+      "text": [
+      "<em>Vape Thurible</em> presents a speculative incense vessel that addresses the eventual loss of frankincense and myrrh due to climate collapse. The work substitutes traditional resin with an electronic vape rig, preserving the form and ritual function of a thurible while altering its material conditions."
+      ],
+      "dimensions": "6\" × 6\" × 10\"",
+      "images": [
+      {
+      "src": "ian-cox-1.jpg",
+      "caption": "Vape Thurible"
+      },
+      {
+      "src": "ian-cox-2.jpg",
+      "caption": "In use"
+      },
+      {
+      "src": "ian-cox-3.jpg",
+      "caption": "Opened, with resin bottle"
+      },
+      {
+      "src": "ian-cox-4.jpg",
+      "caption": "Handle detail"
+      }
+      ],
+      "bg": "rgb(181,171,179)"
+      },
+      {
+      "n": 3,
+      "artist": "Anshula Saha",
+      "title": "Please don’t push my buttons, unless you mean it :(",
+      "year": "2026",
+      "medium": "CRT monitor, silicone, epoxy, Raspberry Pi, modified ELIZA chatbot",
+      "x": 143,
+      "y": 566,
+      "handle": "_anshulaaaaa",
+      "text": [
+      "A silicone-skinned CRT runs a modified version of ELIZA, an early chatbot programmed to simulate conversation through pattern matching. Warmth from the monitor passes through its skin as the machine hesitates, responds, and performs the structure of care. The work asks why we project intimacy and meaning onto machines that cannot understand, remember, or reciprocate."
+      ],
+      "dimensions": "14.3\" × 14.2\" × 12.6\"",
+      "images": [
+      {
+      "src": "anshula-saha-1.jpg",
+      "caption": "Front view"
+      },
+      {
+      "src": "anshula-saha-2.jpg",
+      "caption": "Rear view"
+      },
+      {
+      "src": "anshula-saha-3.jpg",
+      "caption": "Side view"
+      },
+      {
+      "src": "anshula-saha-4.jpg",
+      "caption": "Top view"
+      }
+      ],
+      "bg": "rgb(245,243,244)"
+      },
+      {
+      "n": 4,
+      "artist": "Mina Huang",
+      "title": "HE<3RT 2 HE<3RT",
+      "year": "2026",
+      "medium": "Interactive installation, webcam, monitor, p5.js, ml5.js, machine learning model",
+      "x": 143,
+      "y": 380,
+      "handle": "minachiao",
+      "text": [
+      "Make a heart. No, not that heart. Try again.",
+      "Inspired by all the different ways we make hearts when posing for photos, <em>HE&lt;3RT 2 HE&lt;3RT</em> turns a familiar gesture into a game between you and the camera. Make four different hearts and try to convince the computer that you’ve got each one right. Every successful heart becomes a photograph, and four hearts become a digital photostrip to take home."
+      ]
+      },
+      {
+      "n": 5,
+      "artist": "Joy Chang",
+      "title": "Current",
+      "year": "2026",
+      "medium": "ESP32, LED strip, Silicone Diffuser Tube, brass faucet, acrylic",
+      "x": 146,
+      "y": 189,
+      "handle": "joychxng",
+      "text": [
+      "<em>Current</em> is a sculpture installation that imagines electricity as a physical, tangible resource that can be drawn from a faucet, just like water. Light flows from the faucet in response to real-time electricity demand in the state of New York, transforming an invisible, constantly shifting system into something visible."
+      ]
+      },
+      {
+      "n": 6,
+      "artist": "Jisoo Kim",
+      "title": "Surrounded: A Moment Apart",
+      "year": "2026",
+      "medium": "CNC-fabricated wood, Touch Designer, Kinect, interactive audio, custom electronics",
+      "x": 416,
+      "y": 268,
+      "handle": "jisoo.exr",
+      "text": [
+      "<em>Surrounded: A Moment Apart</em> explores fleeting moments of disconnection within the density of urban life. Drawing from the experience of living in Seoul and New York, the work recreates a familiar subway environment through physical installation and layered sounds, where the presence of others is sensed but remains unseen. Through the visitor’s movement and presence, the work moves between proximity and distance, reflecting on how connection can, in a moment, become a sense of distance."
+      ],
+      "dimensions": "3′ × 4′"
+      },
+      {
+      "n": 7,
+      "artist": "Jane Lee",
+      "title": "Drifting Letters: Moving as a Foreign Self",
+      "year": "2026",
+      "medium": "Voile, thread, wood, custom electronics",
+      "x": 404,
+      "y": 525,
+      "handle": "janeleearchive",
+      "text": [
+      "<em>Drifting Letters</em> is a series of interactive installations that explores how text is read and experienced differently across media within contemporary reading environments. <em>Moving as a Foreign Self</em> is a book of visual poetry reflects on different forms of movement and the emotions the artist experienced while relocating, using fragmented lines and words.",
+      "Through touch, distance, and movement, the work extends reading beyond the letters and the surface. The interaction forms a relationship with the reader through presence and continues into the moment of leaving."
+      ],
+      "dimensions": "8½\" × 18\" × 11\"",
+      "images": [
+      {
+      "src": "jane-lee-1.jpg",
+      "caption": "Moving as a Foreign Self"
+      }
+      ],
+      "bg": "rgb(127,121,113)"
+      },
+      {
+      "n": 8,
+      "artist": "Matthew Blanco",
+      "title": "P.E.D - Personal Enrichment Device",
+      "year": "2025",
+      "medium": "Ferrofluid, PLA, Plywood, Wood Veneer",
+      "x": 410,
+      "y": 700,
+      "handle": "matthew_blanco",
+      "text": [
+      "Do you find yourself endlessly scrolling through your smartphone feeling your brain rot with every swipe and tap? Then the <em>P.E.D,</em> or <em>Personal Enrichment Device</em>, may be right for you. Rather then becoming lost in the sea of content and AI slop, lose yourself in the void. Stare forever into the P.E.D.",
+      "Its compact form allows the device to be taken with you anywhere. Every button press creates a satisfying response that will make you never want to put it down. The P.E.D contains two buttons and an encoder that pulses a ferrofluid display generating organic forms while playing various frequencies. Pick It up and lose yourself."
+      ],
+      "dimensions": "3\" × 3\" × 9\"",
+      "images": [
+      {
+      "src": "matthew-blanco-1.jpg",
+      "caption": "P.E.D - Personal Enrichment Device"
+      },
+      {
+      "src": "matthew-blanco-2.jpg",
+      "caption": "Top view"
+      },
+      {
+      "src": "matthew-blanco-3.jpg",
+      "caption": "Side view"
+      },
+      {
+      "src": "matthew-blanco-4.jpg",
+      "caption": "Installation view"
+      }
+      ],
+      "bg": "rgb(140,140,138)"
+      },
+      {
+      "n": 9,
+      "artist": "Lingwu Li",
+      "title": "Seen",
+      "year": "2026",
+      "medium": "Unreal Engine, interactive digital installation",
+      "x": 404,
+      "y": 882,
+      "handle": "05.lingwu",
+      "text": [
+      "<em>Seen</em> is a first-person narrative game based on the artist’s experience of being digitally surveilled and called in for questioning by authorities in his home country. The work explores how surveillance can turn ordinary communication into a source of fear, where every word feels like it could be used against you. It captures the state of self-monitoring that emerges when being watched becomes part of everyday life."
+      ],
+      "dimensions": "Variable dimensions",
+      "images": [
+      {
+      "src": "lingwu-li-1.jpg",
+      "caption": "Title screen"
+      },
+      {
+      "src": "lingwu-li-2.jpg",
+      "caption": "Installation view"
+      },
+      {
+      "src": "lingwu-li-3.jpg",
+      "caption": "Game still"
+      },
+      {
+      "src": "lingwu-li-4.jpg",
+      "caption": "Game still"
+      },
+      {
+      "src": "lingwu-li-5.jpg",
+      "caption": "Game still"
+      }
+      ],
+      "bg": "rgb(0,0,0)",
+      "thumb": "scale(1.2) translateY(-2.1%)"
+      },
+      {
+      "n": 10,
+      "artist": "Jasmine Chou",
+      "title": "Tree, Grown Together 2.0",
+      "year": "2026",
+      "medium": "Wood, electronics, sensors, monitor, p5.js",
+      "x": 330,
+      "y": 1015,
+      "handle": "jasminechou1005",
+      "text": [
+      "<em>Tree, Grown Together</em> is a collaborative game where participants use sunlight and water to nurture a digital tree. Through this shared act of care, the work explores a simple idea: growth seldom happens overnight or in isolation, instead it flourishes through patience, care, and the support of others."
+      ],
+      "dimensions": "17.7\" × 13.8\" × 11.8\""
+      }
+      ].map(function (w) {
+      w.slug = w.artist.toLowerCase().replace(/ /g, '-');
+      return w;
+    });
+    /* ---------- Close-up viewer: click any artwork photo ---------- */
+    var lb = document.createElement('div');
+    lb.className = 'lb'; lb.hidden = true;
+    lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Photo close-up');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">×</button>' +
+      '<button class="lb-nav lb-prev" type="button" aria-label="Previous photo">←</button>' +
+      '<figure class="lb-fig"><img alt=""><figcaption><span class="lb-cap"></span><span class="lb-count"></span></figcaption></figure>' +
+      '<button class="lb-nav lb-next" type="button" aria-label="Next photo">→</button>';
+    document.body.appendChild(lb);
+    var lbSet = [], lbI = 0, lbTitle = '', lbReturn = null;
+    function lbShow() {
+      var it = lbSet[lbI], img = lb.querySelector('img');
+      img.src = it.src; img.alt = it.caption || lbTitle;
+      lb.querySelector('.lb-cap').textContent = it.caption || '';
+      lb.querySelector('.lb-count').textContent = lbSet.length > 1 ? (lbI + 1) + ' / ' + lbSet.length : '';
+      lb.classList.toggle('single', lbSet.length < 2);
+    }
+    function lbOpen(w, i) {
+      lbSet = (w.images || []).filter(function (x) { return x.src; });
+      if (!lbSet.length) return;
+      lbI = Math.max(0, Math.min(i, lbSet.length - 1)); lbTitle = w.title;
+      lbReturn = document.activeElement;
+      lbShow(); lb.hidden = false; document.documentElement.classList.add('lb-on');
+      lb.querySelector('.lb-close').focus();
+    }
+    function lbClose() { lb.hidden = true; document.documentElement.classList.remove('lb-on'); if (lbReturn && lbReturn.focus) lbReturn.focus(); }
+    function lbStep(d) { if (lbSet.length < 2) return; lbI = (lbI + d + lbSet.length) % lbSet.length; lbShow(); }
+    lb.querySelector('.lb-close').addEventListener('click', lbClose);
+    lb.querySelector('.lb-prev').addEventListener('click', function (e) { e.stopPropagation(); lbStep(-1); });
+    lb.querySelector('.lb-next').addEventListener('click', function (e) { e.stopPropagation(); lbStep(1); });
+    lb.addEventListener('click', function (e) { if (e.target === lb || e.target.classList.contains('lb-fig')) lbClose(); });
+    document.addEventListener('keydown', function (e) {
+      if (lb.hidden) return;
+      if (e.key === 'Escape') lbClose();
+      else if (e.key === 'ArrowRight') lbStep(1);
+      else if (e.key === 'ArrowLeft') lbStep(-1);
+    });
+    var tx = null;   // swipe on phones
+    lb.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+    lb.addEventListener('touchend', function (e) { if (tx === null) return; var dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 40) lbStep(dx < 0 ? 1 : -1); tx = null; });
+    function zoomable(imgEl, w, i) {
+      imgEl.classList.add('zoomable'); imgEl.tabIndex = 0; imgEl.setAttribute('role', 'button');
+      imgEl.setAttribute('aria-label', 'View photo larger' + (imgEl.alt ? ': ' + imgEl.alt : ''));
+      imgEl.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); lbOpen(w, i); });
+      imgEl.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lbOpen(w, i); } });
+    }
+
+    function findWork(slug) { for (var i = 0; i < WORKS.length; i++) if (WORKS[i].slug === slug) return i + 1; return 0; }
+    function txt(id, value) { document.getElementById(id).textContent = value; }
+    function renderWork(slug) {
+      var i = findWork(slug) - 1, w = WORKS[i];
+      txt('h-work', w.title || 'Title to come');
+      var art = document.getElementById('wd-artist');
+      art.innerHTML = '';
+      var link = document.createElement('a'); link.href = '#artist'; link.textContent = w.artist; art.appendChild(link);
+      txt('wd-medium', w.medium || 'To come');
+      txt('wd-year', w.year || 'To come');
+      txt('wd-dims', w.dimensions || '');
+      document.getElementById('wd-dims-row').hidden = !w.dimensions;
+      var text = document.getElementById('wd-text'); text.innerHTML = '';
+      (w.text || ['Description to come. A few paragraphs on the work: what visitors encounter in the gallery, how it responds to their presence or movement, and the ideas behind it.',
+                  'This space can also hold credits, materials, technical notes or a short statement from ' + w.artist.split(' ')[0] + '.'])
+        .forEach(function (t) { var p = document.createElement('p'); p.innerHTML = t; text.appendChild(p); });   // text is our own copy, with <em> for titles
+      var ig = document.getElementById('wd-ig'); ig.innerHTML = '';
+      document.getElementById('wd-ig-row').hidden = !w.handle;
+      if (w.handle) { var ia = document.createElement('a'); ia.href = 'https://www.instagram.com/' + w.handle + '/'; ia.target = '_blank'; ia.rel = 'noopener'; ia.textContent = '@' + w.handle; ig.appendChild(ia); }
+      var imgs = w.images || [];
+      var hero = document.getElementById('wd-hero');
+      hero.innerHTML = imgs[0] ? '' : '<span>Main image to come</span>';
+      hero.style.background = w.bg || '';   // the photo's own backdrop colour, so tall photos don't show bars
+      if (imgs[0]) { var hi = new Image(); hi.alt = imgs[0].caption || w.title || ''; hi.src = imgs[0].src; hero.appendChild(hi); zoomable(hi, w, 0); }
+      var more = document.getElementById('wd-more'); more.innerHTML = '';
+      // works with photos show only the photos they have; works without any keep placeholder slots
+      var extras = imgs.length ? imgs.slice(1) : [{ caption: 'Installation view' }, { caption: 'Detail' }, { caption: 'Process' }];
+      more.hidden = !extras.length;
+      extras.forEach(function (im) {
+        var li = document.createElement('li'), box = document.createElement('div');
+        box.className = 'ph';
+        if (im.src) { var e = new Image(); e.src = im.src; e.alt = im.caption || ''; box.appendChild(e); zoomable(e, w, imgs.indexOf(im)); }
+        else { var sp = document.createElement('span'); sp.textContent = 'Image to come'; box.appendChild(sp); }
+        var cap = document.createElement('p'); cap.className = 'cap'; cap.textContent = im.caption || '';
+        li.appendChild(box); li.appendChild(cap); more.appendChild(li);
+      });
+      var prev = WORKS[(i - 1 + WORKS.length) % WORKS.length], next = WORKS[(i + 1) % WORKS.length];
+      var pa = document.getElementById('wd-prev'), na = document.getElementById('wd-next');
+      pa.href = '#work-' + prev.slug; pa.querySelector('.nm').textContent = prev.title || prev.artist;
+      na.href = '#work-' + next.slug; na.querySelector('.nm').textContent = next.title || next.artist;
+      document.getElementById('page-work').scrollTop = 0;
+      return w;
+    }
+
+    /* ---------- Floor map: numbers on the plan open the matching work in the list ---------- */
+    (function buildFloor() {
+      var NS = 'http://www.w3.org/2000/svg';
+      var spots = document.getElementById('floor-spots'), list = document.getElementById('checklist');
+      var current = 0, last = 0, flip = 1;
+      var links = document.getElementById('floor-links');
+      function spotOf(n) { for (var i = 0; i < WORKS.length; i++) if (WORKS[i].n === n) return WORKS[i]; }
+      function connect(from, to) {
+        var a = spotOf(from), b = spotOf(to);
+        var dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+        flip = -flip;                                   // alternate the bend so lines don't stack
+        var bend = Math.min(80, len * 0.28) * flip;
+        var cx = (a.x + b.x) / 2 - dy / len * bend, cy = (a.y + b.y) / 2 + dx / len * bend;
+        Array.prototype.forEach.call(links.children, function (p) { p.classList.add('past'); });
+        var p = document.createElementNS(NS, 'path');
+        p.setAttribute('class', 'link'); p.setAttribute('pathLength', '1');
+        p.setAttribute('d', 'M ' + a.x + ' ' + a.y + ' Q ' + cx + ' ' + cy + ' ' + b.x + ' ' + b.y);
+        links.appendChild(p);
+        p.getBoundingClientRect();                      // commit the hidden state so the draw animates
+        requestAnimationFrame(function () { p.classList.add('drawn'); });
+      }
+      function select(n, scroll) {
+        current = current === n ? 0 : n;    // clicking the open work closes it
+        if (current && last && current !== last) connect(last, current);
+        if (current) last = current;
+        Array.prototype.forEach.call(spots.children, function (g) { g.classList.toggle('on', +g.getAttribute('data-n') === current); });
+        Array.prototype.forEach.call(list.children, function (li) {
+          var on = +li.getAttribute('data-n') === current;
+          li.classList.toggle('open', on);
+          li.querySelector('.ck-head').setAttribute('aria-expanded', on);
+        });
+        if (current && scroll) {
+          var li = list.querySelector('[data-n="' + current + '"]');
+          setTimeout(function () { li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 60);
+        }
+      }
+      function hot(n, on) {
+        var g = spots.querySelector('[data-n="' + n + '"]'), li = list.querySelector('[data-n="' + n + '"]');
+        if (g) g.classList.toggle('hot', on);
+        if (li) li.classList.toggle('hot', on);
+      }
+      WORKS.forEach(function (w) {
+        // spot on the plan
+        var g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'spot'); g.setAttribute('data-n', w.n);
+        g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', w.n + ', ' + w.artist + ', ' + w.title);
+        var c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', w.x); c.setAttribute('cy', w.y); c.setAttribute('r', 19);
+        var t = document.createElementNS(NS, 'text'); t.setAttribute('x', w.x); t.setAttribute('y', w.y + 6); t.setAttribute('text-anchor', 'middle'); t.textContent = w.n;
+        g.appendChild(c); g.appendChild(t); spots.appendChild(g);
+        g.addEventListener('click', function () { select(w.n, true); });
+        g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(w.n, true); } });
+        g.addEventListener('mouseenter', function () { hot(w.n, true); });
+        g.addEventListener('mouseleave', function () { hot(w.n, false); });
+
+        // entry in the checklist
+        var li = document.createElement('li');
+        li.className = 'ck'; li.setAttribute('data-n', w.n);
+        var head = document.createElement('button');
+        head.className = 'ck-head'; head.type = 'button'; head.setAttribute('aria-expanded', 'false');
+        var num = document.createElement('span'); num.className = 'ck-n'; num.textContent = w.n;
+        var line = document.createElement('span'); line.className = 'ck-line';
+        var lt = document.createElement('em'); lt.textContent = w.title; line.appendChild(lt);
+        head.appendChild(num); head.appendChild(line);
+        var body = document.createElement('div'); body.className = 'ck-body';
+        var inner = document.createElement('div'); inner.className = 'ck-inner';
+        var img = document.createElement('div'); img.className = 'ph ck-img';
+        var first = (w.images || [])[0];
+        if (first) {
+          // on the floor map the photo just leads to the artwork's own page
+          var im = new Image(); im.src = first.src; im.alt = first.caption || w.title;
+          if (w.thumb) im.style.transform = w.thumb;   // crop out black borders baked into the image
+          var lk = document.createElement('a'); lk.href = '#work-' + w.slug; lk.className = 'ck-img-link'; lk.setAttribute('aria-label', 'View artwork: ' + w.title);
+          lk.appendChild(im); img.appendChild(lk);
+        }
+        else { var sp = document.createElement('span'); sp.textContent = 'Image to come'; img.appendChild(sp); }
+        var go = document.createElement('a'); go.className = 'ck-go'; go.href = '#work-' + w.slug; go.textContent = 'View artwork →';
+        var ttl = document.createElement('p'); ttl.className = 'ck-title';
+        ttl.textContent = w.artist + ', ' + w.year;
+        inner.appendChild(ttl);
+        if (w.dimensions) { var mat = document.createElement('p'); mat.className = 'ck-mat'; mat.textContent = w.dimensions; inner.appendChild(mat); }
+        inner.appendChild(img);
+        (w.text || []).forEach(function (t) { var p = document.createElement('p'); p.className = 'ck-text'; p.innerHTML = t; inner.appendChild(p); });
+        inner.appendChild(go); body.appendChild(inner);
+        li.appendChild(head); li.appendChild(body); list.appendChild(li);
+        head.addEventListener('click', function () { select(w.n, false); });
+        li.addEventListener('mouseenter', function () { hot(w.n, true); });
+        li.addEventListener('mouseleave', function () { hot(w.n, false); });
+      });
+    })();
+
+    var views = ['artist', 'works', 'about', 'work'], wasOpen = null, el = null;
+    function route() {
+      var v = (location.hash || '').replace('#', ''), jump = null;
+      if (v === 'contact' || v === 'visit') { v = 'about'; jump = 'visit'; }
+      if (v === 'press') { v = 'about'; jump = 'press'; }   // old Contact links land on the visit section
+      if (v.indexOf('artist-') === 0 && document.getElementById('a-' + v.slice(7))) { jump = 'a-' + v.slice(7); v = 'artist'; }
+      var workSlug = null;
+      if (v.indexOf('work-') === 0 && findWork(v.slice(5))) { workSlug = v.slice(5); v = 'work'; }
+      if (views.indexOf(v) === -1) v = 'home';
+      document.documentElement.classList.toggle('sub', v !== 'home');
+      document.documentElement.classList.toggle('v-artist', v === 'artist');
+      document.documentElement.classList.toggle('v-about', v === 'about');
+      views.forEach(function (name) {
+        var pe = document.getElementById('page-' + name);
+        if (name === v) el = pe;
+        var on = name === v;
+        if (on && pe.hidden) { pe.style.animation = 'none'; void pe.offsetWidth; pe.style.animation = ''; pe.scrollTop = 0; }
+        pe.hidden = !on;
+      });
+      var label = ({ artist: 'Artists', works: 'Artworks', about: 'About' })[v];
+      if (v === 'work') { var w = renderWork(workSlug); label = w.title ? w.title + ', ' + w.artist : w.artist; }
+      document.title = v === 'home' ? 'OnConnect () Group Show' : 'OnConnect () ' + label;
+      if (jump) requestAnimationFrame(function () {
+        var t = document.getElementById(jump);
+        t.scrollIntoView({ block: t.tagName === 'LI' ? 'center' : 'start', behavior: 'smooth' });
+        if (t.tagName === 'LI') { t.classList.remove('flash-row'); void t.offsetWidth; t.classList.add('flash-row'); }
+      });
+      wasOpen = v;
+    }
+
+    /* ---------- Motifs on the inner pages ---------- */
+    // Menu dropdowns: Artworks lists every artwork, Artists jumps to each bio
+    function slugify(t) { return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+    Array.prototype.forEach.call(document.querySelectorAll('.artists li'), function (li) {
+      li.id = 'a-' + slugify(li.querySelector('.a-name').textContent);
+    });
+    // Clicking an artist's name glides that artist to the middle of the screen
+    Array.prototype.forEach.call(document.querySelectorAll('.artists li'), function (li) {
+      var nm = li.querySelector('.a-name');
+      nm.setAttribute('role', 'button'); nm.setAttribute('tabindex', '0');
+      function go() {
+        li.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        li.classList.remove('flash-row'); void li.offsetWidth; li.classList.add('flash-row');
+      }
+      nm.addEventListener('click', go);
+      nm.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
+    function makeDropdown(href, items) {
+      Array.prototype.forEach.call(document.querySelectorAll('.nav a[href="' + href + '"]'), function (a) {
+        var wrap = document.createElement('span'); wrap.className = 'dd';
+        a.parentNode.insertBefore(wrap, a); wrap.appendChild(a);
+        var ul = document.createElement('ul'); ul.className = 'dd-menu';
+        items.forEach(function (it) {
+          var li = document.createElement('li'), l = document.createElement('a');
+          l.href = it.href;
+          var em = document.createElement('em'); em.textContent = it.title; l.appendChild(em);
+          if (it.sub) { var by = document.createElement('span'); by.textContent = it.sub; l.appendChild(by); }
+          li.appendChild(l); ul.appendChild(li);
+        });
+        wrap.appendChild(ul);
+        // opens to the right; nudge back only if it would run off the screen edge
+        wrap.addEventListener('mouseenter', function () {
+          ul.style.left = '';
+          var r = ul.getBoundingClientRect(), over = r.right - (window.innerWidth - 16);
+          if (over > 0) ul.style.left = (-16 - over) + 'px';
+        });
+        // close the menu once something in it is chosen
+        ul.addEventListener('click', function () { wrap.classList.add('shut'); setTimeout(function () { wrap.classList.remove('shut'); if (document.activeElement) document.activeElement.blur(); }, 400); });
+      });
+    }
+    makeDropdown('#works', WORKS.map(function (w) { return { href: '#work-' + w.slug, title: w.title }; }));
+    makeDropdown('#about', [{ href: '#visit', title: 'Gallery info' }, { href: '#press', title: 'Press' }]);
+    makeDropdown('#artist', Array.prototype.map.call(document.querySelectorAll('.artists li'), function (li) {
+      return { href: '#' + li.id.replace(/^a-/, 'artist-'), title: li.querySelector('.a-name').textContent };
+    }));
+    window.addEventListener('hashchange', route);
+    route();
+
+    /* ---------- Responsive layout ----------
+       Wide screens: the 822x590 poster as designed.
+       Tall screens (phones): the same line network centred, with the text moved
+       above and below it and scaled up so it stays readable. */
+    var SVGNS = 'http://www.w3.org/2000/svg';
+    var stage = document.getElementById('stage');
+    var W = 822, H0 = 590, NET_CY = 295;
+    var tall = false;
+    function setT(id, tx, ty, s) {
+      document.getElementById(id).setAttribute('transform', s ? 'translate(' + tx + ' ' + ty + ') scale(' + s + ')' : '');
+    }
+    function extend(runIn) {
+      Array.prototype.forEach.call(stage.querySelectorAll('.wire'), function (p) {
+        var src = p.getAttribute('data-src');
+        if (!src) return;                      // phone-only decorative lines are drawn whole
+        var n = src.match(/-?\d+\.?\d*/g).map(Number);
+        var x0 = n[0], y0 = n[1], dx = x0 - n[2], dy = y0 - n[3], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+        var fx = x0 + ux * runIn, fy = y0 + uy * runIn;
+        p.setAttribute('d', 'M ' + fx + ' ' + fy + ' C ' + (fx - ux * runIn / 3) + ' ' + (fy - uy * runIn / 3) + ' ' +
+          (x0 + ux * runIn / 3) + ' ' + (y0 + uy * runIn / 3) + ' ' + x0 + ' ' + y0 + ' ' + src.slice(src.indexOf('C')));
+      });
+    }
+    function layout() {
+      var r = stage.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var nowTall = r.height / r.width > 1.15;
+      // keep the hairlines at least ~0.8px on screen, however small the poster is scaled
+      var px = nowTall ? r.width / W : Math.min(r.width / W, r.height / H0);
+      stage.style.setProperty('--wire-w', Math.max(0.55, 0.5 / px));
+      stage.style.setProperty('--tip-w', Math.max(1.3, 1.1 / px));
+      if (!nowTall) {
+        stage.setAttribute('viewBox', '0 0 ' + W + ' ' + H0);
+        ['t-dates', 't-group', 't-venue', 't-recep'].forEach(function (id) { setT(id); });
+        setHit(34); setButtons(18); placeButtons(window.__wideBtn || null);
+        stage.classList.remove('tall');
+      } else {
+        var H = W * r.height / r.width, Y0 = NET_CY - H / 2;
+        var k = r.width / W;                 // screen px per poster unit
+        var s = Math.max(1, 0.95 / k);       // text scale so small type lands near 15px
+        var pad = 28 / k, top = Y0 + pad, bottom = Y0 + H - pad;
+        stage.setAttribute('viewBox', '0 ' + Y0 + ' ' + W + ' ' + H);
+        setT('t-dates', 31.5 - s * 31.5, top + s * 17.7 - s * 48.7, s);
+        setT('t-group', (W - 31.5 - s * 40) - s * 424.3, top + s * 11 - s * 37.9, s);
+        setT('t-recep', 31.5 - s * 31.5, bottom - s * 565.3, s);
+        var venueBase = bottom - s * 19.2 - s * 14 - s * 30;
+        setT('t-venue', (W - 31.5) - s * 797, venueBase - s * 403, s);
+        setHit(Math.max(34, 26 / k));        // bigger tap targets on phones
+        setButtons(Math.max(18, 15 / k));    // and bigger circles, so they read as buttons
+        stage.classList.add('tall');
+        if (!decoBuilt) buildDeco(Y0, H, top, s, venueBase, k);
+        placeButtons(window.__btnPos);
+      }
+      if (nowTall !== tall || !stage.hasAttribute('data-laid')) {
+        tall = nowTall; stage.setAttribute('data-laid', '');
+        extend(tall ? 1600 : 700);           // run-ins long enough to start beyond the screen edge
+        if (window.__modeChange) window.__modeChange();
+      }
+    }
+    function setHit(rad) {
+      Array.prototype.forEach.call(stage.querySelectorAll('.hit'), function (c) { c.setAttribute('r', rad); });
+    }
+    function setButtons(rad) {
+      Array.prototype.forEach.call(stage.querySelectorAll('.btn'), function (b) {
+        var dot = b.querySelector('.dot'), lab = b.querySelector('.label'), fs = 11 * rad / 18;
+        dot.setAttribute('r', rad);
+        lab.style.fontSize = fs + 'px';
+        lab.setAttribute('y', +dot.getAttribute('cy') + fs * 0.36);
+      });
+      window.__btnR = rad;
+    }
+
+    /* Phones: the network is redrawn from the portrait poster's loops.
+       Poster coordinates (1500 x 2000) are mapped so its centre circle sits on ours. */
+    var decoBuilt = false;
+    window.__deco = []; window.__btnPos = null;
+    function catmull(pts) {
+      var P = [[2 * pts[0][0] - pts[1][0], 2 * pts[0][1] - pts[1][1]]].concat(pts, [[2 * pts[pts.length - 1][0] - pts[pts.length - 2][0], 2 * pts[pts.length - 1][1] - pts[pts.length - 2][1]]]);
+      var d = 'M ' + P[1][0] + ' ' + P[1][1];
+      function dist(a, b) { return Math.pow(Math.hypot(b[0] - a[0], b[1] - a[1]), 0.5) || 1e-6; }
+      for (var i = 1; i < P.length - 2; i++) {
+        var p0 = P[i - 1], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2];
+        var t01 = dist(p0, p1), t12 = dist(p1, p2), t23 = dist(p2, p3);
+        var m1 = [0, 1].map(function (j) { return p2[j] - p1[j] + t12 * ((p1[j] - p0[j]) / t01 - (p2[j] - p0[j]) / (t01 + t12)); });
+        var m2 = [0, 1].map(function (j) { return p2[j] - p1[j] + t12 * ((p3[j] - p2[j]) / t23 - (p3[j] - p1[j]) / (t12 + t23)); });
+        d += ' C ' + (p1[0] + m1[0] / 3) + ' ' + (p1[1] + m1[1] / 3) + ' ' + (p2[0] - m2[0] / 3) + ' ' + (p2[1] - m2[1] / 3) + ' ' + p2[0] + ' ' + p2[1];
+      }
+      return d;
+    }
+    // smooth curve through the points; open ends continue straight out past the screen edge
+    function smoothPath(pts, s, e, far) {
+      function ext(a, b) { var dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy) || 1; return function (d) { return [a[0] + dx / L * d, a[1] + dy / L * d]; }; }
+      // one extra curve point beyond each open end, so any bend into the straight run-out happens off-screen
+      pts = pts.slice();
+      if (s) pts.unshift(ext(pts[0], pts[1])(Math.hypot(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1])));
+      if (e) { var n0 = pts.length; pts.push(ext(pts[n0 - 1], pts[n0 - 2])(Math.hypot(pts[n0 - 1][0] - pts[n0 - 2][0], pts[n0 - 1][1] - pts[n0 - 2][1]))); }
+      var d = catmull(pts), n = pts.length;
+      if (s) d = 'M ' + ext(pts[0], pts[1])(far).join(' ') + ' L' + d.slice(1);
+      if (e) d += ' L ' + ext(pts[n - 1], pts[n - 2])(far).join(' ');
+      return d;
+    }
+    function buildDeco(Y0, H, top, s, venueBase, k) {
+      decoBuilt = true;
+      var NS = 'http://www.w3.org/2000/svg', SC = 0.65;
+      function m(p) { return [329.8275 + (p[0] - 650) * SC, 265.5343 + (p[1] - 826) * SC]; }
+      // run a line's open end straight out past the screen edge
+      function runOut(pts, atStart) {
+        var a = atStart ? pts[0] : pts[pts.length - 1], b = atStart ? pts[1] : pts[pts.length - 2];
+        var dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy) || 1, far = [a[0] + dx / L * 1500, a[1] + dy / L * 1500];
+        return atStart ? [far].concat(pts) : pts.concat([far]);
+      }
+      // circles on the poster (poster coordinates)
+      var A = [295, 675], B = [1230, 477], C = [1092, 703], D = [977, 1046], E = [227, 1180], F = [718, 1568], G = [1166, 1420], CEN = [650, 826];
+      var lines = [
+        { p: [[1430.3, -332.2], [1389.2, -308.9], [1347.4, -288.5], [1304.8, -270.8], [1261.7, -255.5], [1216.8, -242.0], [1172.6, -230.6], [1126.9, -220.6], [1080.8, -211.9], [1035.5, -204.3], [990.2, -197.4], [943.5, -190.8], [898.0, -184.4], [852.5, -177.8], [806.0, -170.6], [760.8, -162.8], [714.8, -153.8], [670.2, -143.6], [625.0, -131.5], [581.4, -117.7], [537.2, -101.4], [494.8, -83.2], [453.3, -62.8], [412.7, -40.3], [373.2, -16.0], [335.0, 10.1], [298.2, 37.9], [262.2, 67.9], [228.4, 99.9], [198.3, 134.7], [173.4, 173.2], [154.4, 215.4], [141.6, 260.6], [134.8, 306.5], [133.8, 353.1], [137.9, 398.5], [147.4, 444.1], [161.7, 487.8], [181.3, 530.1], [205.2, 570.0], [232.9, 607.5], [262.7, 642.2], A, [328.4, 705.3], [363.6, 733.7], [400.2, 760.0], [438.1, 784.3], [477.2, 806.0], [518.5, 824.0], [562.3, 835.2], [606.5, 836.3], CEN], s: 1 },
+        { p: [[1505.5, 817.3], [1504.1, 863.2], [1499.5, 908.3], [1491.9, 952.5], [1481.3, 995.8], [1467.2, 1040.2], [1451.0, 1081.3], [1432.3, 1121.4], [1410.0, 1162.1], [1386.4, 1199.6], [1360.6, 1235.6], [1331.4, 1272.0], [1301.5, 1305.0], [1269.9, 1336.5], [1236.5, 1366.3], [1201.6, 1394.3], G, [1123.7, 1447.2], [1082.8, 1470.4], [1040.6, 1491.4], [995.4, 1510.9], [951.3, 1527.0], [906.5, 1540.6], [858.9, 1552.1], [813.1, 1560.2], [764.7, 1565.8], F, [672.2, 1566.9], [626.3, 1562.1], [580.8, 1553.5], [538.1, 1541.4], [494.2, 1524.5], [453.8, 1504.4], [415.3, 1480.8], [377.6, 1452.2], [344.9, 1421.6], [314.5, 1386.2], [289.8, 1349.6], [268.1, 1308.5], [250.4, 1265.3], [237.0, 1222.6], E, [219.0, 1132.5], [213.8, 1083.8], [211.7, 1037.4], [212.3, 991.0], [215.7, 944.9], [222.2, 896.9], [231.3, 851.4], [243.2, 806.4], [257.8, 762.0], [275.9, 716.3], A, [316.7, 633.8], [341.0, 593.3], [367.5, 554.1], [394.5, 518.2], [424.8, 482.0], [456.9, 447.7], [490.6, 415.3], [526.0, 384.9], [562.8, 356.9], [601.0, 331.2], [640.7, 308.0], [683.8, 286.7], [726.3, 269.2], [770.2, 254.8], [815.4, 243.4], [861.7, 235.1], [908.8, 229.7], [954.3, 227.1], [1000.1, 227.0], [1048.4, 229.3], [1094.0, 234.2], [1139.4, 244.6], [1181.3, 265.2], [1214.0, 298.4], [1233.0, 339.8], [1239.9, 386.0], [1238.4, 432.1], B, [1215.5, 520.7], [1196.9, 560.9], [1174.4, 599.6], [1148.8, 636.6], [1120.8, 671.8], C, [1055.8, 736.1], [1016.8, 765.0], [976.9, 788.1], [932.3, 806.9], [887.1, 819.5], [840.1, 827.2], [792.3, 831.0], [744.4, 831.5], [697.4, 829.7], CEN], s: 1 },
+        { p: [[1496.7, 822.4], [1497.2, 774.6], [1489.9, 728.1], [1475.0, 682.7], [1453.8, 640.9], [1426.6, 602.1], [1394.0, 567.1], [1357.9, 537.3], [1317.5, 512.1], [1274.3, 492.0], B, [1183.4, 466.0], [1136.9, 459.0], [1089.6, 455.3], [1042.1, 454.6], [994.9, 457.0], [947.8, 463.0], [901.4, 473.2], [856.3, 488.2], [813.7, 508.5], [773.8, 534.8], [738.6, 566.6], [708.5, 602.6], [683.5, 642.8], [664.3, 686.0], [651.6, 732.1], [646.6, 779.3], CEN], s: 1 },
+        { p: [G, [1137.5, 1455.7], [1104.6, 1487.3], [1068.2, 1514.4], [1028.3, 1537.2], [986.6, 1555.0], [943.1, 1568.3], [898.3, 1577.1], [853.4, 1581.4], [807.6, 1581.3], [762.1, 1576.8], F, [674.0, 1554.5], [631.3, 1536.1], [591.7, 1513.5], [554.7, 1486.0], [521.5, 1453.9], [492.9, 1418.0], [468.8, 1378.4], [449.7, 1336.7], [435.3, 1293.0], [426.0, 1247.9], [421.9, 1202.3], [423.3, 1156.1], [430.6, 1110.7], [444.0, 1067.0], [462.8, 1025.1], [486.3, 985.2], [513.5, 948.3], [544.0, 913.8], [577.1, 881.9], [612.9, 852.4], CEN] },
+        { p: [G, [1166.2, 1376.0], [1161.6, 1332.1], [1152.7, 1289.5], [1139.2, 1247.4], [1121.8, 1207.4], [1100.2, 1169.3], [1074.6, 1133.4], [1045.3, 1100.5], [1012.6, 1071.2], D, [938.3, 1023.9], [898.5, 1004.4], [858.2, 985.7], [817.8, 966.6], [778.7, 945.7], [741.0, 921.7], [706.5, 894.2], [675.7, 862.1], CEN] },
+        { p: [C, [1044.6, 701.8], [997.5, 702.4], [950.4, 705.1], [903.3, 710.6], [856.9, 719.2], [811.4, 731.4], [767.0, 747.9], [724.9, 769.1], [685.5, 795.2], CEN] },
+        { p: [[-6.6, 1479.9], [1.6, 1526.4], [13.7, 1570.3], [30.3, 1614.3], [50.1, 1655.2], [74.1, 1695.5], [100.7, 1732.2], [131.3, 1767.6], [163.7, 1799.0], [199.9, 1828.3], [238.5, 1854.2], [277.9, 1876.2], [320.4, 1896.1], [362.9, 1912.8], [406.4, 1927.0], [452.4, 1939.0], [497.3, 1947.5], [542.3, 1952.6], [588.9, 1953.7], [635.1, 1950.3], [680.5, 1942.4], [724.9, 1929.6], [767.9, 1912.0], [807.9, 1890.3], [846.1, 1864.8], [882.3, 1836.2], [916.2, 1805.1], [948.8, 1771.1], [978.8, 1735.5], [1006.6, 1698.5], [1031.7, 1661.7], [1056.2, 1622.5], [1079.6, 1582.4], [1102.2, 1541.4], [1123.6, 1501.3], [1145.7, 1459.3], G, [1186.2, 1378.2], [1203.2, 1337.1], [1216.9, 1293.4], [1225.3, 1249.8], [1227.7, 1203.9], [1222.7, 1159.4], [1208.8, 1116.8], [1183.9, 1078.8], [1149.5, 1050.2], [1107.7, 1031.8], [1063.1, 1025.3], [1019.7, 1029.9], D, [938.8, 1073.3], [909.0, 1108.4], [888.9, 1149.3], [880.3, 1195.5], [883.9, 1241.5], [897.7, 1287.0], [918.2, 1327.2], [946.1, 1364.9], [979.4, 1397.2], [1018.3, 1424.3], [1059.1, 1444.1], [1103.5, 1457.7], [1150.7, 1464.0], [1196.8, 1463.8], [1243.3, 1459.1], [1288.4, 1452.1], [1335.1, 1444.1], [1380.0, 1437.3], [1426.2, 1433.0], [1473.5, 1433.5], [1518.4, 1440.6]], s: 1, e: 1 }
+      ];
+      var wiresG = stage.querySelector('.wires'), ui = stage.querySelector('.poster-ui'), firstBtn = ui.querySelector('.bob[data-anchor="about"]');
+      lines.forEach(function (ln) {
+        var pts = ln.p.map(m), st = ln.s, en = ln.e;
+        if (ln.p[0] === CEN) { pts.reverse(); st = ln.e; en = ln.s; }   // draw in from outside, toward the middle
+        var p = document.createElementNS(NS, 'path');
+        p.setAttribute('class', 'wire phone'); p.setAttribute('pathLength', '1'); p.setAttribute('d', smoothPath(pts, st, en, 1500));
+        wiresG.appendChild(p);
+      });
+      // the page buttons move onto three of the poster's circles
+      window.__btnPos = { about: m(A), artists: m(B), contact: m(G) };
+      // every other circle is a small dot, so it doesn't read as a button
+      [C, D, E, F].forEach(function (pt, i) {
+        pt = m(pt);
+        var name = 'd' + i, b = document.createElementNS(NS, 'g'), n = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
+        var r = Math.max(4, 3.5 / k);
+        b.setAttribute('class', 'bob phone'); b.setAttribute('data-anchor', name); b.setAttribute('data-bob', '2');
+        n.setAttribute('class', 'node'); n.setAttribute('data-anchor', name);
+        c.setAttribute('class', 'fill'); c.setAttribute('cx', pt[0]); c.setAttribute('cy', pt[1]); c.setAttribute('r', r);
+        n.appendChild(c); b.appendChild(n); ui.insertBefore(b, firstBtn);
+        window.__deco.push({ name: name, x: pt[0], y: pt[1], r: r });
+      });
+    }
+    function placeButtons(pos) {
+      ['about', 'artists', 'contact'].forEach(function (name) {
+        var g = stage.querySelector('.bob[data-anchor="' + name + '"]');
+        var hit = g.querySelector('.hit'), dot = g.querySelector('.dot'), lab = g.querySelector('.label');
+        if (!dot.hasAttribute('data-x')) { dot.setAttribute('data-x', dot.getAttribute('cx')); dot.setAttribute('data-y', dot.getAttribute('cy')); }
+        var x = pos ? pos[name][0] : +dot.getAttribute('data-x'), y = pos ? pos[name][1] : +dot.getAttribute('data-y');
+        [hit, dot].forEach(function (c) { c.setAttribute('cx', x); c.setAttribute('cy', y); });
+        lab.setAttribute('x', x);
+        lab.setAttribute('y', y + parseFloat(lab.style.fontSize || 11) * 0.36);
+      });
+    }
+    /* Desktop: the original network, plus the big right-hand arc traced from the wide poster
+       (2000 x 971 reference). */
+    var WIDE = false;
+    function buildWide() {
+      var NS = 'http://www.w3.org/2000/svg';
+      var A = [395, 227], B = [1456, 265], C = [1303, 722], D = [302, 905], CEN = [868, 430];
+      // the whole poster width fits the screen (so the big right-hand arc shows); full height top to bottom
+      var SX = 0.44, SY = 0.61;
+      function m(p) { return [329.8275 + (p[0] - 868) * SX, 265.5343 + (p[1] - 430) * SY]; }
+      function runOut(pts, atStart) {
+        var a = atStart ? pts[0] : pts[pts.length - 1], b = atStart ? pts[1] : pts[pts.length - 2];
+        var dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy) || 1, far = [a[0] + dx / L * 900, a[1] + dy / L * 900];
+        return atStart ? [far].concat(pts) : pts.concat([far]);
+      }
+      var lines = [
+        { p: [[1697.0, -12.4], [1751.5, 17.1], [1801.4, 50.4], [1845.7, 87.3], [1884.5, 127.6], [1917.2, 170.6], [1944.0, 215.7], [1964.8, 262.0], [1980.5, 309.7], [1991.4, 358.5], [1997.8, 406.9], [2000.3, 455.7], [1999.1, 504.8], [1994.5, 553.9], [1986.9, 602.4], [1976.3, 650.7], [1962.9, 699.0], [1947.0, 746.7], [1928.9, 793.7], [1908.4, 840.2], [1885.6, 886.6], [1860.8, 932.1], [1833.9, 976.9]], s: 1, e: 1, wide: 1.25 }
+      ];
+      var wiresG = stage.querySelector('.wires'), ui = stage.querySelector('.poster-ui'), firstBtn = ui.querySelector('.bob[data-anchor="about"]');
+      lines.forEach(function (ln) {
+        var pts = ln.p.map(m), st = ln.s, en = ln.e;
+        // the right-hand arc is pushed outward so it crosses the other lines outside the frame
+        if (ln.wide) pts = pts.map(function (q) { return [329.8275 + (q[0] - 329.8275) * ln.wide + Math.max(0, (200 - q[1]) / 200) * 45, q[1]]; });
+        if (ln.p[0] === CEN) { pts.reverse(); st = ln.e; en = ln.s; }   // draw in from outside, toward the middle
+        var p = document.createElementNS(NS, 'path');
+        p.setAttribute('class', 'wire wide'); p.setAttribute('pathLength', '1'); p.setAttribute('d', smoothPath(pts, st, en, 900));
+        wiresG.appendChild(p);
+      });
+    }
+    if (WIDE) buildWide();
+    layout();
+    window.addEventListener('resize', layout);
+
+    /* ---------- Line intro ---------- */
+    var fx = document.getElementById('fx');
+    function visibleWires() { return Array.prototype.slice.call(stage.querySelectorAll('.wire')).filter(function (p) { return getComputedStyle(p).display !== 'none'; }); }
+    var wires = visibleWires();
+    var DURATION = 3.4, STAGGER = 0.12, TOLERANCE = 14;
+    var anchors = {
+      about:   { x: 56.17,    y: 161.0337, r: 18 },
+      artists: { x: 700.07,   y: 161.0337, r: 18 },
+      contact: { x: 605.54,   y: 448.1533, r: 18 },
+      center:  { x: 329.8275, y: 265.5343, r: 69.4 }
+    };
+    (window.__deco || []).forEach(function (d) { anchors[d.name] = { x: d.x, y: d.y, r: d.r }; });
+    var homeXY = { about: [56.17, 161.0337], artists: [700.07, 161.0337], contact: [605.54, 448.1533] };
+    function setAnchors() {
+      ['about', 'artists', 'contact'].forEach(function (n) {
+        if (window.__btnR) anchors[n].r = window.__btnR;
+        var xy = (window.__btnPos && stage.classList.contains('tall')) ? window.__btnPos[n] : (window.__wideBtn || homeXY)[n];
+        anchors[n].x = xy[0]; anchors[n].y = xy[1];
+      });
+    }
+    setAnchors();
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { stage.classList.add('still'); return; }
+
+    function node(name) { return stage.querySelector('.node[data-anchor="' + name + '"]'); }
+    function bobber(name) { return stage.querySelector('.bob[data-anchor="' + name + '"]'); }
+    function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+    // Where along each line it passes through each circle
+    var hits = [];
+    function findHits() {
+    hits = [];
+    wires.forEach(function (p, i) {
+      var len = p.getTotalLength();
+      Object.keys(anchors).forEach(function (name) {
+        var a = anchors[name], best = Infinity, at = 0;
+        for (var s = 0; s <= 600; s++) {
+          var pt = p.getPointAtLength(len * s / 600);
+          var d = Math.hypot(pt.x - a.x, pt.y - a.y);
+          if (d < best) { best = d; at = s / 600; }
+        }
+        if (best <= TOLERANCE) hits.push({ path: i, anchor: name, at: Math.min(at, 0.999) });
+      });
+    });
+    }
+    findHits();
+
+    var last = {};
+    function connect(name) {
+      var now = performance.now();
+      if (last[name] && now - last[name] < 120) return;
+      last[name] = now;
+      var n = node(name);
+      if (name === 'center' || /^[dw]\d/.test(name)) {
+        if (!n.classList.contains('on')) { n.classList.add('on'); return; }
+        bob(name); burst(name); return;
+      }
+      // The three button circles wait until a line has reached each of them, then pop together
+      reached[name] = true;
+      if (!buttonsUp) {
+        if (reached.about && reached.artists && reached.contact) popButtons();
+        return;
+      }
+      if (performance.now() < flashUntil) return;
+      bob(name); burst(name);
+    }
+    var reached = {}, buttonsUp = false, flashUntil = 0;
+    function popButtons() {
+      buttonsUp = true;
+      ['about', 'artists', 'contact'].forEach(function (name) { node(name).classList.add('on'); });
+    }
+    // Last step of the intro: all three flash black with their word, then settle back to white
+    var flashTimer = null;
+    function flashButtons() {
+      flashUntil = performance.now() + 1300;
+      Array.prototype.forEach.call(stage.querySelectorAll('.btn'), function (b) {
+        b.classList.add('flash');
+        setTimeout(function () { b.classList.remove('flash'); }, 1100);
+      });
+    }
+    function bob(name) {
+      var g = bobber(name), d = +g.getAttribute('data-bob');
+      if (!g.animate) return;
+      g.animate([
+        { transform: 'translate(0px, 0px)' },
+        { transform: 'translate(0px, ' + (-d) + 'px)' },
+        { transform: 'translate(0px, 1.5px)' },
+        { transform: 'translate(0px, 0px)' }
+      ], { duration: 450, easing: 'ease-in-out' });
+    }
+    function burst(name) {
+      var a = anchors[name];
+      if (!fx.animate) return;
+      var glow = document.createElementNS(SVGNS, 'circle');
+      glow.setAttribute('class', 'glow');
+      glow.setAttribute('cx', a.x); glow.setAttribute('cy', a.y); glow.setAttribute('r', a.r);
+      fx.appendChild(glow);
+      glow.animate([{ opacity: 0 }, { opacity: .55 }, { opacity: .2 }, { opacity: 0 }],
+        { duration: 450, easing: 'ease-in-out', fill: 'forwards' });
+      for (var i = 0; i < 6; i++) {
+        var ang = Math.PI * 2 * i / 6 + Math.random() * 0.2;
+        var dist = a.r * (name === 'center' ? 1.05 : 1.2) + Math.random() * 8;
+        var dot = document.createElementNS(SVGNS, 'circle');
+        dot.setAttribute('class', 'spark');
+        dot.setAttribute('cx', a.x); dot.setAttribute('cy', a.y); dot.setAttribute('r', 1.5);
+        fx.appendChild(dot);
+        dot.animate([
+          { opacity: 0, transform: 'translate(0px, 0px)' },
+          { opacity: 1, transform: 'translate(0px, 0px)', offset: 0.15 },
+          { opacity: 0, transform: 'translate(' + Math.cos(ang) * dist + 'px, ' + Math.sin(ang) * dist + 'px)' }
+        ], { duration: 450, easing: 'ease-out', fill: 'forwards' });
+      }
+      setTimeout(function () { while (fx.firstChild) fx.removeChild(fx.firstChild); }, 520);
+    }
+
+    var tipsG = document.createElementNS(SVGNS, 'g');
+    tipsG.setAttribute('class', 'tips'); tipsG.setAttribute('aria-hidden', 'true');
+    stage.querySelector('.wires').after(tipsG);
+    var tips = [];
+    function makeTips() {
+      while (tipsG.firstChild) tipsG.removeChild(tipsG.firstChild);
+      tips = wires.map(function (p) {
+        var t = document.createElementNS(SVGNS, 'path');
+        t.setAttribute('class', 'tip'); t.setAttribute('pathLength', '1'); t.setAttribute('d', p.getAttribute('d'));
+        tipsG.appendChild(t); return t;
+      });
+    }
+
+    // Switching between the wide and the tall layout swaps the line sets:
+    // the new set takes over, already drawn if the intro is over
+    var introDone = false, fired = {};
+    window.__modeChange = function () {
+      wires = visibleWires(); setAnchors(); findHits(); fired = {};
+      if (!started) return;
+      makeTips();
+      if (introDone) {
+        wires.forEach(function (p, i) { p.style.strokeDashoffset = 0; tips[i].style.strokeDashoffset = -1; tips[i].classList.add('cool'); });
+        Array.prototype.forEach.call(stage.querySelectorAll('.node'), function (n) { n.classList.add('on'); });
+      }
+    };
+    var started = false;
+    function start() {
+      if (started) return; started = true;
+      makeTips();
+      var t0 = performance.now(); fired = {}; introDone = false;
+      var total = DURATION + STAGGER * (wires.length - 1);
+      function tick(now) {
+        var el = (now - t0) / 1000;
+        wires.forEach(function (p, i) {
+          var raw = Math.min(Math.max((el - i * STAGGER) / DURATION, 0), 1);
+          var prog = ease(raw);
+          p.style.strokeDashoffset = 1 - prog;
+          tips[i].style.strokeDashoffset = 0.05 - prog;
+          if (raw >= 1 && !tips[i].classList.contains('cool')) tips[i].classList.add('cool');
+          hits.forEach(function (h, k) {
+            if (h.path === i && !fired[k] && prog >= h.at) { fired[k] = true; connect(h.anchor); }
+          });
+        });
+        if (el < total) requestAnimationFrame(tick);
+        else setTimeout(function () {
+          introDone = true;
+          stage.classList.add('ready');          // logo, then the text
+          flashTimer = setTimeout(flashButtons, 2500); // then the words in the circles
+        }, 250);
+      }
+      requestAnimationFrame(tick);
+    }
+    // Start once the fonts are in, so the type doesn't swap mid-intro
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(start, start);
+    setTimeout(start, 1200);
+
+    // Click empty space on the home page to replay
+    stage.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('a')) return;
+      if (document.documentElement.classList.contains('sub')) return;
+      stage.classList.remove('ready');
+      Array.prototype.forEach.call(stage.querySelectorAll('.node'), function (n) { n.classList.remove('on'); });
+      Array.prototype.forEach.call(stage.querySelectorAll('.btn'), function (b) { b.classList.remove('flash'); });
+      wires.forEach(function (p) { p.style.strokeDashoffset = 1; });
+      clearTimeout(flashTimer);
+      reached = {}; buttonsUp = false; last = {};
+      started = false; setTimeout(start, 500);
+    });
+  })();
+</script>
+
+</body>
+</html>
