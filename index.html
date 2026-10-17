@@ -1,11 +1,4 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="OnConnect () — a group show at The Living Gallery, Brooklyn. October 18–23, 2026.">
-</head>
-<body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>OnConnect () Group Show</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -234,6 +227,9 @@
   .about-info { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 40px clamp(32px, 5vw, 72px); align-items: start; }
   .about-info > section, .statement { scroll-margin-top: 32px; }
   .visit.press .facts { grid-template-columns: 1fr; gap: 16px; }
+  .contact-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; margin: 0; }
+  .contact-mail { font-family: var(--serif); font-size: 16px; line-height: 1.35; color: inherit; text-decoration: none; }
+  a.contact-mail:hover { color: var(--signal); }
   .press-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .press-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; padding-block: 12px; border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
   .press-list p { margin: 0; }
@@ -413,9 +409,7 @@
   }
 </style>
 
-<svg class="stage" viewBox="0 0 822 590" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="t d" id="stage">
-  <title id="t">OnConnect () — Group Show</title>
-  <desc id="d">October 18–23, 2026 at The Living Gallery, 1094 Broadway, Brooklyn, New York. Open every day 11AM–8PM. Opening reception Sunday, October 18, with an artist talk 7PM–8PM.</desc>
+<svg class="stage" viewBox="0 0 822 590" preserveAspectRatio="xMidYMid meet" role="img" aria-label="OnConnect (), a group show. October 18–23, 2026 at The Living Gallery, 1094 Broadway, Brooklyn, New York. Open 11AM–8PM. Opening reception and artist talk Sunday, October 18, 7PM–8PM." id="stage">
   <defs>
     <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
   </defs>
@@ -571,10 +565,9 @@
       <img src="poster.jpg" width="1800" height="2400" alt="OnConnect () exhibition poster: thin lines connecting white circles around the orange OnConnect () logo, with the dates October 18–22, 2026, The Living Gallery at 1094 Broadway, Brooklyn, the opening reception Sunday 18th at 7PM, and the names of the ten artists.">
     </figure>
     <div class="statement" id="show">
-      <p>Connection can no longer be understood as a simple link between discrete entities. Digital networks, interfaces, algorithms, and data have fundamentally reshaped the ways in which humans, technologies, images, and environments relate to one another. Connection is no longer the outcome of interaction, but the condition through which relationships are organized and continually reconfigured. We exist not outside these systems, but as part of the networks that shape us.</p>
-      <p><em>OnConnect()</em> takes this shift as its point of departure, approaching connection as an event rather than a fixed state. The exhibition explores how relationships between humans and technologies, spaces and environments are formed and transformed, while questioning how the human is positioned within connection itself. Rather than representing relationships, the participating works construct situations in which visitors, artworks, and space actively reorganize one another. The gallery thus becomes not a site where connection is represented, but one in which it is enacted, negotiated, and continually renewed.</p>
-      <p>Bringing together ten media artists, <em>OnConnect()</em> features interactive installations, kinetic objects, sound works, moving images, and network-based projects that investigate relationships between humans and machines, material and immaterial systems, perception and infrastructure. Visitors move beyond the role of spectators as their presence, movement, and decisions become integral to the unfolding of each work.</p>
-      <p>Workshops and public programs extend these encounters beyond the exhibition space, positioning the exhibition itself as a platform for collectively producing and reflecting upon connection.</p>
+      <p>Connection can no longer be understood as a simple link between discrete entities. Digital networks, interfaces, algorithms, and data have fundamentally reshaped the ways in which humans, technologies, images, and environments relate to one another. Rather than an outcome of interaction, connection has become the condition through which relationships are organized and continually reconfigured. We do not stand outside these networks as their creators or observers, but exist as part of the connection that shapes us.</p>
+      <p><em>OnConnect()</em> takes this shift in perception as its point of departure, approaching connection as an event rather than a fixed state. The exhibition explores how relationships between humans and technologies, spaces and environments, are formed and transformed, while questioning how the human is positioned within these systems. The participating works construct situations in which visitors, artworks, and space actively reorganize one another. The gallery thus becomes not a site where connection is represented, but one in which it is enacted, negotiated, and continually renewed.</p>
+      <p>Bringing together ten media artists, <em>OnConnect()</em> features interactive installations, kinetic objects, sound works, moving images, and network-based projects that investigate relationships between humans and machines, material and immaterial systems, perception and infrastructure. Visitors move beyond the role of spectators as their presence, movement, and decisions become integral to the unfolding of each work. Through these encounters, <em>OnConnect()</em> invites us to reconsider what it means to be connected and what we seek from connection.</p>
     </div>
     </div>
     <div class="about-info">
@@ -593,16 +586,18 @@
         <div><dt>Opening reception &amp; artist talk</dt><dd>Sunday, October 18<br>7PM–8PM</dd></div>
       </dl>
     </section>
-    <section class="visit press" id="press" aria-labelledby="h-press">
-      <h2 class="kicker" id="h-press">Press</h2>
-      <ul class="press-list">
+    <section class="visit press" id="contact" aria-labelledby="h-press">
+      <p class="contact-row"><span class="kicker" id="h-press">Contact</span> <span class="contact-mail">Email to come</span></p>
+      <!-- Press is hidden for now: remove the word hidden from the next line to bring the article list back -->
+      <ul class="press-list" hidden>
         <li><p class="press-pub">Publication name</p><p class="press-title">Article title to come</p><p class="press-date">Date</p></li>
         <li><p class="press-pub">Publication name</p><p class="press-title">Article title to come</p><p class="press-date">Date</p></li>
       </ul>
+      <!-- Press kit, hidden for now: delete this comment's first and last lines to bring it back
       <dl class="facts">
-        <div><dt>Contact</dt><dd>Contact to come</dd></div>
         <div><dt>Press kit</dt><dd>Images and release coming soon</dd></div>
       </dl>
+      -->
     </section>
     </div>
   </div>
@@ -1094,8 +1089,8 @@
     var views = ['artist', 'works', 'about', 'work'], wasOpen = null, el = null;
     function route() {
       var v = (location.hash || '').replace('#', ''), jump = null;
-      if (v === 'contact' || v === 'visit') { v = 'about'; jump = 'visit'; }
-      if (v === 'press') { v = 'about'; jump = 'press'; }
+      if (v === 'visit') { v = 'about'; jump = 'visit'; }
+      if (v === 'contact' || v === 'press') { v = 'about'; jump = 'contact'; }
       if (v === 'show') { v = 'about'; jump = 'show'; }     // the paragraphs about the show   // old Contact links land on the visit section
       if (v.indexOf('artist-') === 0 && document.getElementById('a-' + v.slice(7))) { jump = 'a-' + v.slice(7); v = 'artist'; }
       var workSlug = null;
@@ -1163,7 +1158,7 @@
       });
     }
     makeDropdown('#works', WORKS.map(function (w) { return { href: '#work-' + w.slug, title: w.title }; }));
-    makeDropdown('#about', [{ href: '#show', title: 'Our Show' }, { href: '#visit', title: 'The Gallery' }, { href: '#press', title: 'Press' }]);
+    makeDropdown('#about', [{ href: '#show', title: 'Our Show' }, { href: '#visit', title: 'The Gallery' }, { href: '#contact', title: 'Contact' }]);
     makeDropdown('#artist', Array.prototype.map.call(document.querySelectorAll('.artists li'), function (li) {
       return { href: '#' + li.id.replace(/^a-/, 'artist-'), title: li.querySelector('.a-name').textContent };
     }));
@@ -1289,7 +1284,7 @@
         { p: [G, [1137.5, 1455.7], [1104.6, 1487.3], [1068.2, 1514.4], [1028.3, 1537.2], [986.6, 1555.0], [943.1, 1568.3], [898.3, 1577.1], [853.4, 1581.4], [807.6, 1581.3], [762.1, 1576.8], F, [674.0, 1554.5], [631.3, 1536.1], [591.7, 1513.5], [554.7, 1486.0], [521.5, 1453.9], [492.9, 1418.0], [468.8, 1378.4], [449.7, 1336.7], [435.3, 1293.0], [426.0, 1247.9], [421.9, 1202.3], [423.3, 1156.1], [430.6, 1110.7], [444.0, 1067.0], [462.8, 1025.1], [486.3, 985.2], [513.5, 948.3], [544.0, 913.8], [577.1, 881.9], [612.9, 852.4], CEN] },
         { p: [G, [1166.2, 1376.0], [1161.6, 1332.1], [1152.7, 1289.5], [1139.2, 1247.4], [1121.8, 1207.4], [1100.2, 1169.3], [1074.6, 1133.4], [1045.3, 1100.5], [1012.6, 1071.2], D, [938.3, 1023.9], [898.5, 1004.4], [858.2, 985.7], [817.8, 966.6], [778.7, 945.7], [741.0, 921.7], [706.5, 894.2], [675.7, 862.1], CEN] },
         { p: [C, [1044.6, 701.8], [997.5, 702.4], [950.4, 705.1], [903.3, 710.6], [856.9, 719.2], [811.4, 731.4], [767.0, 747.9], [724.9, 769.1], [685.5, 795.2], CEN] },
-        { p: [[-6.6, 1479.9], [1.6, 1526.4], [13.7, 1570.3], [30.3, 1614.3], [50.1, 1655.2], [74.1, 1695.5], [100.7, 1732.2], [131.3, 1767.6], [163.7, 1799.0], [199.9, 1828.3], [238.5, 1854.2], [277.9, 1876.2], [320.4, 1896.1], [362.9, 1912.8], [406.4, 1927.0], [452.4, 1939.0], [497.3, 1947.5], [542.3, 1952.6], [588.9, 1953.7], [635.1, 1950.3], [680.5, 1942.4], [724.9, 1929.6], [767.9, 1912.0], [807.9, 1890.3], [846.1, 1864.8], [882.3, 1836.2], [916.2, 1805.1], [948.8, 1771.1], [978.8, 1735.5], [1006.6, 1698.5], [1031.7, 1661.7], [1056.2, 1622.5], [1079.6, 1582.4], [1102.2, 1541.4], [1123.6, 1501.3], [1145.7, 1459.3], G, [1186.2, 1378.2], [1203.2, 1337.1], [1216.9, 1293.4], [1225.3, 1249.8], [1227.7, 1203.9], [1222.7, 1159.4], [1208.8, 1116.8], [1183.9, 1078.8], [1149.5, 1050.2], [1107.7, 1031.8], [1063.1, 1025.3], [1019.7, 1029.9], D, [938.8, 1073.3], [909.0, 1108.4], [888.9, 1149.3], [880.3, 1195.5], [883.9, 1241.5], [897.7, 1287.0], [918.2, 1327.2], [946.1, 1364.9], [979.4, 1397.2], [1018.3, 1424.3], [1059.1, 1444.1], [1103.5, 1457.7], [1150.7, 1464.0], [1196.8, 1463.8], [1243.3, 1459.1], [1288.4, 1452.1], [1335.1, 1444.1], [1380.0, 1437.3], [1426.2, 1433.0], [1473.5, 1433.5], [1518.4, 1440.6]], s: 1, e: 1 }
+        { p: [[-6.6, 1479.8], [1.1, 1525.5], [13.4, 1570.1], [29.9, 1613.5], [50.0, 1654.7], [74.1, 1694.7], [101.1, 1732.0], [131.1, 1766.9], [163.9, 1799.1], [199.2, 1828.5], [237.4, 1855.0], [277.6, 1877.9], [319.6, 1897.2], [363.0, 1913.3], [407.0, 1926.0], [451.9, 1936.2], [497.6, 1943.9], [543.7, 1949.6], [589.1, 1953.0], [635.7, 1952.8], [681.1, 1946.9], [725.6, 1933.7], [767.4, 1914.4], [807.3, 1890.4], [844.7, 1863.7], [880.3, 1834.6], [914.2, 1803.4], [946.4, 1770.3], [977.0, 1735.6], [1005.9, 1699.6], [1033.3, 1662.5], [1059.4, 1623.9], [1083.4, 1584.5], [1104.9, 1544.3], [1125.2, 1502.5], [1145.5, 1461.2], G, [1185.7, 1378.4], [1203.2, 1336.5], [1217.8, 1292.7], [1227.3, 1248.0], [1229.8, 1202.6], [1223.4, 1157.4], [1207.5, 1114.6], [1183.0, 1076.2], [1150.2, 1044.9], [1109.3, 1025.2], [1064.1, 1021.0], [1019.2, 1029.0], D, [938.4, 1071.1], [906.9, 1104.6], [886.4, 1145.2], [879.4, 1189.8], [883.8, 1235.4], [897.3, 1278.9], [919.9, 1319.2], [951.4, 1352.4], [989.3, 1377.1], [1031.6, 1394.6], [1075.8, 1406.4], [1121.3, 1414.4], G, [1210.9, 1424.6], [1255.2, 1429.4], [1299.2, 1434.3], [1343.5, 1438.3], [1388.1, 1440.4], [1432.3, 1439.8], [1477.3, 1438.0], [1521.2, 1436.7]], s: 1, e: 1 }
       ];
       var wiresG = stage.querySelector('.wires'), ui = stage.querySelector('.poster-ui'), firstBtn = ui.querySelector('.bob[data-anchor="about"]');
       lines.forEach(function (ln) {
@@ -1302,7 +1297,7 @@
       // the page buttons move onto three of the poster's circles
       window.__btnPos = { about: m(A), artists: m(B), contact: m(G) };
       // every other circle is a small dot, so it doesn't read as a button
-      [C, D, E, F].forEach(function (pt, i) {
+      [C, D, F].forEach(function (pt, i) {        // E sat on a single line, so it is left out
         pt = m(pt);
         var name = 'd' + i, b = document.createElementNS(NS, 'g'), n = document.createElementNS(NS, 'g'), c = document.createElementNS(NS, 'circle');
         var r = Math.max(4, 3.5 / k);
@@ -1409,6 +1404,8 @@
       if (last[name] && now - last[name] < 120) return;
       last[name] = now;
       var n = node(name);
+      // the small dots wait and appear together with the three button circles
+      if (/^[dw]\d/.test(name) && !buttonsUp) { pendingDots[name] = true; return; }
       if (name === 'center' || /^[dw]\d/.test(name)) {
         if (!n.classList.contains('on')) { n.classList.add('on'); return; }
         bob(name); burst(name); return;
@@ -1422,10 +1419,12 @@
       if (performance.now() < flashUntil) return;
       bob(name); burst(name);
     }
-    var reached = {}, buttonsUp = false, flashUntil = 0;
+    var reached = {}, buttonsUp = false, flashUntil = 0, pendingDots = {};
     function popButtons() {
       buttonsUp = true;
       ['about', 'artists', 'contact'].forEach(function (name) { node(name).classList.add('on'); });
+      Object.keys(pendingDots).forEach(function (name) { node(name).classList.add('on'); });
+      pendingDots = {};
     }
     // Last step of the intro: all three flash black with their word, then settle back to white
     var flashTimer = null;
@@ -1488,34 +1487,97 @@
     // the new set takes over, already drawn if the intro is over
     var introDone = false, fired = {};
     window.__modeChange = function () {
-      wires = visibleWires(); setAnchors(); findHits(); fired = {};
+      wires = visibleWires(); setAnchors();
+      // the phone's small dots are built the first time the layout turns tall, so register them now
+      (window.__deco || []).forEach(function (d) { anchors[d.name] = { x: d.x, y: d.y, r: d.r }; });
+      findHits(); fired = {};
       if (!started) return;
+      if (!introDone) {                      // switched mid-intro: replay it in the new layout
+        runId++;
+        Array.prototype.forEach.call(stage.querySelectorAll('.node'), function (n) { n.classList.remove('on'); });
+        wires.forEach(function (p) { p.style.strokeDashoffset = 1; });
+        reached = {}; buttonsUp = false; last = {}; pendingDots = {};
+        started = false; start(); return;
+      }
       makeTips();
       if (introDone) {
         wires.forEach(function (p, i) { p.style.strokeDashoffset = 0; tips[i].style.strokeDashoffset = -1; tips[i].classList.add('cool'); });
         Array.prototype.forEach.call(stage.querySelectorAll('.node'), function (n) { n.classList.add('on'); });
       }
     };
-    var started = false;
+    var started = false, runId = 0;
+    /* Phones: every line moves at the same speed. Lines that come in from off-screen are timed
+       so they all arrive together; the short lines that begin at a circle set off the moment
+       another line passes through that circle, so they read as that line carrying on. */
+    var PHONE_TIME = 3.6, TIP_LEN = 70;
+    function phonePlan() {
+      var vb = stage.getAttribute('viewBox').split(' ').map(Number), pad = 4;
+      function inside(pt) { return pt.x > vb[0] - pad && pt.x < vb[0] + vb[2] + pad && pt.y > vb[1] - pad && pt.y < vb[1] + vb[3] + pad; }
+      var info = wires.map(function (p) {
+        var L = p.getTotalLength(), enter = 0, N = 800;
+        if (!inside(p.getPointAtLength(0))) {
+          for (var k = 1; k <= N; k++) { if (inside(p.getPointAtLength(L * k / N))) { enter = L * (k - 1) / N; break; } }
+        }
+        // a line that starts on a circle (not off-screen) waits for another line to reach that circle
+        var startsAt = null;
+        hits.forEach(function (h) { if (h.path === wires.indexOf(p) && h.at < 0.004) startsAt = h.anchor; });
+        return { L: L, enter: enter, startsAt: enter === 0 ? startsAt : null, start: 0 };
+      });
+      var longest = 0;
+      info.forEach(function (o) { if (!o.startsAt) longest = Math.max(longest, o.L - o.enter); });
+      var v = longest / PHONE_TIME;
+      info.forEach(function (o) { if (!o.startsAt) o.start = PHONE_TIME - (o.L - o.enter) / v; });
+      // when each circle first lights up: dots light when a line reaches them; the three buttons wait for each other
+      var firstPass = {};
+      hits.forEach(function (h) {
+        var par = info[h.path]; if (par.startsAt) return;
+        var t = par.start + (h.at * par.L - par.enter) / v;
+        if (firstPass[h.anchor] === undefined || t < firstPass[h.anchor]) firstPass[h.anchor] = t;
+      });
+      var buttonsPop = Math.max(firstPass.about || 0, firstPass.artists || 0, firstPass.contact || 0);
+      info.forEach(function (o) {
+        if (!o.startsAt) return;
+        var isBtn = ['about', 'artists', 'contact'].indexOf(o.startsAt) !== -1;
+        o.start = isBtn ? buttonsPop : Math.max(buttonsPop, firstPass[o.startsAt] || 0);
+      });
+      var end = 0;
+      info.forEach(function (o, i) {
+        o.end = o.start + (o.L - o.enter) / v; end = Math.max(end, o.end);
+        tips[i].style.strokeDasharray = (TIP_LEN / o.L) + ' 3';
+      });
+      return { info: info, v: v, end: end };
+    }
+
     function start() {
       if (started) return; started = true;
       makeTips();
-      var t0 = performance.now(); fired = {}; introDone = false;
-      var total = DURATION + STAGGER * (wires.length - 1);
+      var t0 = performance.now(), myRun = ++runId; fired = {}; introDone = false;
+      var plan = stage.classList.contains('tall') ? phonePlan() : null;
+      var total = plan ? plan.end : DURATION + STAGGER * (wires.length - 1);
       function tick(now) {
+        if (myRun !== runId) return;           // a newer run has taken over
         var el = (now - t0) / 1000;
         wires.forEach(function (p, i) {
-          var raw = Math.min(Math.max((el - i * STAGGER) / DURATION, 0), 1);
-          var prog = ease(raw);
+          var raw, prog, tipLen = 0.05;
+          if (plan && plan.info[i]) {
+            var o = plan.info[i];
+            var sNow = el < o.start ? 0 : Math.min(o.L, o.enter + (el - o.start) * plan.v);
+            prog = sNow / o.L; raw = el >= o.end ? 1 : (sNow >= o.L ? 1 : 0); tipLen = TIP_LEN / o.L;
+            if (el < o.start) prog = 0;
+          } else {
+            raw = Math.min(Math.max((el - i * STAGGER) / DURATION, 0), 1);
+            prog = ease(raw);
+          }
           p.style.strokeDashoffset = 1 - prog;
-          tips[i].style.strokeDashoffset = 0.05 - prog;
+          tips[i].style.strokeDashoffset = tipLen - prog;
           if (raw >= 1 && !tips[i].classList.contains('cool')) tips[i].classList.add('cool');
           hits.forEach(function (h, k) {
-            if (h.path === i && !fired[k] && prog >= h.at) { fired[k] = true; connect(h.anchor); }
+            if (h.path === i && !fired[k] && (plan ? prog > 0 : true) && prog >= h.at) { fired[k] = true; connect(h.anchor); }
           });
         });
         if (el < total) requestAnimationFrame(tick);
         else setTimeout(function () {
+          if (myRun !== runId) return;
           introDone = true;
           stage.classList.add('ready');          // logo, then the text
           flashTimer = setTimeout(flashButtons, 2500); // then the words in the circles
@@ -1536,11 +1598,10 @@
       Array.prototype.forEach.call(stage.querySelectorAll('.btn'), function (b) { b.classList.remove('flash'); });
       wires.forEach(function (p) { p.style.strokeDashoffset = 1; });
       clearTimeout(flashTimer);
-      reached = {}; buttonsUp = false; last = {};
+      reached = {}; buttonsUp = false; last = {}; pendingDots = {};
       started = false; setTimeout(start, 500);
     });
   })();
 </script>
 
-</body>
-</html>
+</body></html>
